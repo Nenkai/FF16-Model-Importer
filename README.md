@@ -19,3 +19,7 @@ Inject:
 
 Imports the contents back from "body" folder.
 
+Credits:
+- Nenkai for pac handling needed to get .skl data and some .tex info.
+- Joschuka/Dimy/Someone else for various research and help for MDL file binary.
+

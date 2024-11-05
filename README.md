@@ -15,10 +15,10 @@ If you appreciate my tools, feel free to [donate](https://ko-fi.com/simplykxg)
 In a command line window
 
 Commands:
-- MdlConverter.exe body.mdl c1002.pac (Extracts contents to a folder called "body" with all LOD models as .gltf)
-- MdlConverter.exe material.mtl (mtl conversion)
-- MdlConverter.exe material.json (conversion back to mtl)
-- MdlConverter.exe body (Imports mdl contents back from "body" folder.)
+- `MdlConverter.exe body.mdl` c1002.pac (Extracts contents to a folder called "body" with all LOD models as .gltf)
+- `MdlConverter.exe material.mtl` (mtl conversion)
+- `MdlConverter.exe material.json` (conversion back to mtl)
+- `MdlConverter.exe body` (Imports mdl contents back from "body" folder.)
 
 **Ensure you provide the .pac from a character pack folder for skeleton data**
 

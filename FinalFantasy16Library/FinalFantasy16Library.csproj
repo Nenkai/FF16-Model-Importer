@@ -1,0 +1,37 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <AllowUnsafeBlocks>True</AllowUnsafeBlocks>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="BCnEncoder.Net" Version="2.1.0" />
+    <PackageReference Include="CommunityToolkit.HighPerformance" Version="8.3.2" />
+    <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
+    <PackageReference Include="SixLabors.ImageSharp" Version="3.1.5" />
+    <PackageReference Include="SkiaSharp" Version="3.0.0-preview.4.1" />
+    <PackageReference Include="Vortice.DirectStorage" Version="3.6.1-beta" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Reference Include="HKLib">
+      <HintPath>Lib\HKLib.dll</HintPath>
+    </Reference>
+    <Reference Include="HKLib.Reflection">
+      <HintPath>Lib\HKLib.Reflection.dll</HintPath>
+    </Reference>
+    <Reference Include="HKLib.Serialization">
+      <HintPath>Lib\HKLib.Serialization.dll</HintPath>
+    </Reference>
+    <Reference Include="IONET">
+      <HintPath>Lib\IONET.dll</HintPath>
+    </Reference>
+    <Reference Include="Syroot.BinaryData">
+      <HintPath>Lib\Syroot.BinaryData.dll</HintPath>
+    </Reference>
+  </ItemGroup>
+
+</Project>

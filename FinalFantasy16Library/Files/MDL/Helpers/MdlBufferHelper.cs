@@ -354,14 +354,14 @@ namespace CafeLibrary.ff16
             {
                 var boneCount = ((byte)boneIndices.Count * 32) / 255f;
                 BoneWeights0 = new Vector4(boneCount,
-                    weights.Count > 0 ? weights[0] : 0f,
-                    weights.Count > 1 ? weights[1] : 0f,
-                    weights.Count > 2 ? weights[2] : 0f);
+                    weights.Count > 0 ? weights[1] : 0f,
+                    weights.Count > 1 ? weights[2] : 0f,
+                    weights.Count > 2 ? weights[3] : 0f);
                 BoneWeights1 = new Vector4(
-                    weights.Count > 3 ? weights[3] : 0f,
-                    weights.Count > 4 ? weights[4] : 0f,
-                    weights.Count > 5 ? weights[5] : 0f,
-                    weights.Count > 6 ? weights[6] : 0f);
+                    weights.Count > 3 ? weights[4] : 0f,
+                    weights.Count > 4 ? weights[5] : 0f,
+                    weights.Count > 5 ? weights[6] : 0f,
+                    weights.Count > 6 ? weights[7] : 0f);
 
                 BoneIndices0 = new Vector4(
                     boneIndices.Count > 0 ? boneIndices[0] : 0,

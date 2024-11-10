@@ -740,6 +740,7 @@ namespace CafeLibrary.ff16
             Vec4HalfFloat = 52,
             UNorm8 = 68,
             Byte4 = 116,
+            UShort4 = 132,
         }
 
         public enum AttributeType : byte

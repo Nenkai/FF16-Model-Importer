@@ -24,7 +24,7 @@ namespace MdlTest.ff16
         /// Exports the mdl and skeleton data with a given file path.
         /// Supported output: .dae, .obj, .gltf, .glb
         /// </summary>
-        public static void Export(MdlFile mdlFile, SkelFile skelFile, string path, int lod = 0,
+        public static void Export(MdlFile mdlFile, List<SkelFile> skeletons, string path, int lod = 0,
             ProgressTracker progress = null)
         {
             IOModel iomodel = new IOModel();
@@ -118,37 +118,45 @@ namespace MdlTest.ff16
 
             List<IOBone> bones = new List<IOBone>();
 
-            for (int i = 0; i < skelFile?.m_Skeleton.m_bones.Count; i++)
+            foreach (var skelFile in skeletons)
             {
-                var name = skelFile.m_Skeleton.m_bones[i].m_name;
-                var transform = skelFile.m_Skeleton.m_referencePose[i];
-
-                bones.Add(new IOBone()
+                for (int i = 0; i < skelFile?.m_Skeleton.m_bones.Count; i++)
                 {
-                    Name = name,
-                    Translation = new Vector3(
-                        transform.m_translation.X,
-                        transform.m_translation.Y,
-                        transform.m_translation.Z),
-                    Rotation = new Quaternion(
-                        transform.m_rotation.X,
-                        transform.m_rotation.Y,
-                        transform.m_rotation.Z,
-                        transform.m_rotation.W),
-                    Scale = new Vector3(
-                        transform.m_scale.X,
-                        transform.m_scale.Y,
-                        transform.m_scale.Z),
-                });
+                    var name = skelFile.m_Skeleton.m_bones[i].m_name;
+                    var transform = skelFile.m_Skeleton.m_referencePose[i];
 
-                //hack
-                if (float.IsNaN(bones[i].RotationEuler.X) ||
-                    float.IsNaN(bones[i].RotationEuler.Y) ||
-                    float.IsNaN(bones[i].RotationEuler.Z))
-                      bones[i].RotationEuler = new Vector3(0);
+                    //Dupe bone, skip.
+                    if (bones.Any(x => x.Name == name))
+                        continue;
+
+                    bones.Add(new IOBone()
+                    {
+                        Name = name,
+                        Translation = new Vector3(
+                            transform.m_translation.X,
+                            transform.m_translation.Y,
+                            transform.m_translation.Z),
+                        Rotation = new Quaternion(
+                            transform.m_rotation.X,
+                            transform.m_rotation.Y,
+                            transform.m_rotation.Z,
+                            transform.m_rotation.W),
+                        Scale = new Vector3(
+                            transform.m_scale.X,
+                            transform.m_scale.Y,
+                            transform.m_scale.Z),
+                    });
+
+                    //hack
+                    if (float.IsNaN(bones[i].RotationEuler.X) ||
+                        float.IsNaN(bones[i].RotationEuler.Y) ||
+                        float.IsNaN(bones[i].RotationEuler.Z))
+                        bones[i].RotationEuler = new Vector3(0);
+                }
             }
 
-            if (skelFile == null)
+            //Alterate skeleton if none providied
+            if (skeletons.Count == 0)
             {
                 foreach (var joint in mdlFile.JointNames)
                 {
@@ -159,16 +167,25 @@ namespace MdlTest.ff16
                 }
             }
 
-            for (int i = 0; i < skelFile?.m_Skeleton.m_parentIndices.Count; i++)
+            foreach (var skelFile in skeletons)
             {
-                var parentIdx = skelFile.m_Skeleton.m_parentIndices[i];
-                if (parentIdx != -1)
-                    bones[parentIdx].AddChild(bones[i]);
-                else
-                    iomodel.Skeleton.RootBones.Add(bones[i]);
+                for (int i = 0; i < skelFile.m_Skeleton.m_parentIndices.Count; i++)
+                {
+                    string boneName = skelFile.m_Skeleton.m_bones[i].m_name;
+                    var bone = bones.FirstOrDefault(x => x.Name == boneName);
+
+                    var parentIdx = skelFile.m_Skeleton.m_parentIndices[i];
+                    if (parentIdx != -1)
+                    {
+                        var parent = bones.FirstOrDefault(x => x.Name == skelFile.m_Skeleton.m_bones[parentIdx].m_name);
+                        bones[parentIdx].AddChild(bone);
+                    }
+                    else
+                        iomodel.Skeleton.RootBones.Add(bone);
+                }
             }
 
-            if (skelFile != null)
+            foreach (var skelFile in skeletons)
             {
                 //Add empties for bones not in the skel file for some reason
                 foreach (var joint in mdlFile.JointNames.Where(x => !skelFile.m_Skeleton.m_bones.Any(z => z.m_name != x)))

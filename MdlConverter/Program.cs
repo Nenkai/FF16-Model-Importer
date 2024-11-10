@@ -68,28 +68,17 @@ namespace FinalFantasyConvertTool
                 {
                     string name = Path.GetFileNameWithoutExtension(arg);
 
-                    SkelFile skel = null;
+                    List<SkelFile> skeletons= new List<SkelFile>();
 
                     var pacFile = args.FirstOrDefault(x => x.EndsWith(".pac"));
                     if (!string.IsNullOrEmpty(pacFile))
                     {
-                        bool isFace = name.Contains("face");
-                        bool isHead = name.Contains("head");
-                        bool isBody = name.Contains("body");
-
                         //Get skeleton from given pac argument
                         PacFile pac = new PacFile(File.OpenRead(pacFile));
                         //Multiple skeletons
-                        foreach (var file in pac.Files.Where(x => x.FileName.EndsWith(".skl")))
-                        {
-                            if (file.FileName.Contains("head.skl") && isHead)
-                                skel = new SkelFile(new MemoryStream(file.Data));
-                            if (file.FileName.Contains("face.skl") && isFace)
-                                skel = new SkelFile(new MemoryStream(file.Data));
-                            if (file.FileName.Contains("body.skl") && isBody || (!isBody && !isFace && !isHead)) //default to body otherwise
-                                skel = new SkelFile(new MemoryStream(file.Data));
-                        }
-                    }
+                        foreach (var file in pac.Files.Where(x => x.FileName.EndsWith(".skl")).OrderByDescending(g => g.FileName.Contains("body.skl")))
+                            skeletons.Add(new SkelFile(new MemoryStream(file.Data)));
+                    }   
 
                     if (!Directory.Exists(name))
                         Directory.CreateDirectory(name);
@@ -97,7 +86,7 @@ namespace FinalFantasyConvertTool
                     MdlFile mdlFile = new MdlFile(File.OpenRead(arg));
 
                     for (int i = 0; i < mdlFile.LODModels.Count; i++)
-                        ModelExporter.Export(mdlFile, skel, Path.Combine(name, $"{name}_LOD{i}.glb"), i);
+                        ModelExporter.Export(mdlFile, skeletons, Path.Combine(name, $"{name}_LOD{i}.glb"), i);
                 }
 
                 if (arg.EndsWith(".mtl"))

@@ -15,8 +15,6 @@ namespace FinalFantasyConvertTool
     {
         public static void Main(string[] args)
         {
-            args = new string[] { "body" };
-
             foreach (string arg in args)
             {
                 if (arg.EndsWith(".tex"))

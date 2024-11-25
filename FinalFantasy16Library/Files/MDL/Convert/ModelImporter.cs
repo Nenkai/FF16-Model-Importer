@@ -23,6 +23,10 @@ namespace MdlTest.ff16
 
             mdlFile.vBuffers = new MdlFile.Buffer[0];
             mdlFile.idxBuffers = new MdlFile.Buffer[0];
+
+            mdlFile.JointBoundings.Clear();
+            mdlFile.JointNames.Clear();
+            mdlFile.Joints.Clear();
         }
 
         public static void Import(MdlFile mdlFile, string path, bool clearExisting = true, ProgressTracker progress = null)
@@ -75,6 +79,39 @@ namespace MdlTest.ff16
             {
                 MdlFile.LODModelInfo modelInfo = new MdlFile.LODModelInfo();
                 modelInfo.MeshIndex = (ushort)mdlFile.MeshInfos.Count;
+
+                //Update bone data if necessary
+                foreach (var iomesh in model.Meshes)
+                {
+                    foreach (var weight in iomesh.Vertices.SelectMany(x => x.Envelope.Weights))
+                    {
+                        if (string.IsNullOrEmpty(weight.BoneName))
+                            continue;
+
+                        //Ensure rigged bones is mapped into mdl
+                        if (!mdlFile.JointNames.Contains(weight.BoneName))
+                        {
+                            mdlFile.JointNames.Add(weight.BoneName);
+                            //Each bone has a bounding box
+                            mdlFile.JointBoundings.Add(new MdlFile.JointBounding()
+                            {
+                                // fixed bounding till calculations are added in another update
+                                BoundingMax = new MdlFile.Vector3Struct(1, 1, 1),
+                                BoundingMin = new MdlFile.Vector3Struct(-1, -1, -1),
+                            });
+                            // bone pos
+                            var bone = model.Skeleton.GetBoneByName(weight.BoneName);
+                            if (bone != null )
+                                mdlFile.Joints.Add(new MdlFile.JointEntry() {
+                                    WorldPosition = new MdlFile.Vector3Struct(
+                                        bone.TranslationX,
+                                        bone.TranslationY, 
+                                        bone.TranslationZ) });
+                            else
+                                mdlFile.Joints.Add(new MdlFile.JointEntry() { });
+                        }
+                    }
+                }
 
                 List<MdlFile.MeshInfo> meshes = new List<MdlFile.MeshInfo>();
 

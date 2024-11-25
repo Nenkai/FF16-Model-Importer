@@ -103,7 +103,7 @@ namespace CafeLibrary.ff16
         /// <summary>
         /// A list of bounding boxes used to attach to joints for culling.
         /// </summary>
-        private List<JointBounding> JointBoundings = new List<JointBounding>();
+        public List<JointBounding> JointBoundings = new List<JointBounding>();
 
         /// <summary>
         /// A list of joint names.
@@ -457,14 +457,16 @@ namespace CafeLibrary.ff16
             if (SpecsHeader.JointCount > 0)
                 JointBoundings = reader.ReadMultipleStructs<JointBounding>(SpecsHeader.JointCount + 1);
 
-            MaterialNames = ReadStrings(reader, SpecsHeader.MaterialCount);
-            JointNames = ReadStrings(reader, SpecsHeader.JointCount);
-            JointFaceNames = ReadStrings(reader, SpecsHeader.JointFaceCount);
-            JointMuscleNames = ReadStrings(reader, SpecsHeader.JointMuscleCount);
-            Part2Names = ReadStrings(reader, SpecsHeader.Part2Count);
-            Part1Names = ReadStrings(reader, SpecsHeader.Part1Count);
-            Part3Names = ReadStrings(reader, SpecsHeader.Part3Count);
+            long stringTablePos = reader.Position;
 
+            //Read strings with their offset pointers
+            MaterialNames = ReadStrings(reader, stringTablePos, MaterialNamePointers.Select(x => x.Offset).ToArray());
+            JointNames = ReadStrings(reader, stringTablePos, Joints.Select(x => (ulong)x.NameOffset).ToArray());
+            JointFaceNames = ReadStrings(reader, stringTablePos, JointFaceNamePointers);
+            JointMuscleNames = ReadStrings(reader, stringTablePos, JointMuscles.Select(x => (ulong)x.NameOffset).ToArray());
+            Part2Names = ReadStrings(reader, SpecsHeader.Part2Count, Part2NamePointers.Select(x => x.Offset).ToArray());
+            Part1Names = ReadStrings(reader, SpecsHeader.Part1Count, Part1NamePointers.Select(x => x.Offset).ToArray());
+            Part3Names = ReadStrings(reader, SpecsHeader.Part3Count, Part3NamePointers.Select(x => x.Offset).ToArray());
 
             Console.WriteLine($"{Part1Names.Count} {Part2Names.Count} {Part3Names.Count} {SpecsHeader.McexSize}");
 
@@ -478,11 +480,14 @@ namespace CafeLibrary.ff16
             }
         }
 
-        private List<string> ReadStrings(FileReader reader, uint count)
+        private List<string> ReadStrings(FileReader reader, long startOfs, ulong[] offsets)
         {
-            string[] strings = new string[count];
-            for (int i = 0; i < count; i++)
+            string[] strings = new string[offsets.Length];
+            for (int i = 0; i < offsets.Length; i++)
+            {
+                reader.SeekBegin(startOfs + (int)offsets[i]);
                 strings[i] = reader.ReadStringZeroTerminated();
+            }
             return strings.ToList();
         }
 
@@ -676,6 +681,13 @@ namespace CafeLibrary.ff16
             public float X;
             public float Y;
             public float Z;
+
+            public Vector3Struct() { }
+
+            public Vector3Struct(float x, float y, float z)
+            {
+                X = x; Y = y; Z = z;
+            }
         }
 
         public struct VertexAttributeSet

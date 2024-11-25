@@ -24,6 +24,7 @@ namespace MdlTest.ff16
             mdlFile.vBuffers = new MdlFile.Buffer[0];
             mdlFile.idxBuffers = new MdlFile.Buffer[0];
 
+
             mdlFile.JointBoundings.Clear();
             mdlFile.JointNames.Clear();
             mdlFile.Joints.Clear();

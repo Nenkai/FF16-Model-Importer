@@ -15,6 +15,8 @@ namespace FinalFantasyConvertTool
     {
         public static void Main(string[] args)
         {
+            args = new string[] { "body" };
+
             foreach (string arg in args)
             {
                 if (arg.EndsWith(".tex"))
@@ -59,6 +61,15 @@ namespace FinalFantasyConvertTool
                             ModelImporter.Import(mdlFile, inputPath, false);
                         }
                     }
+
+                    // Add one final bounding as the list is always joint count + 1
+                    if (mdlFile.JointBoundings.Count > 0)
+                        mdlFile.JointBoundings.Add(new MdlFile.JointBounding()
+                        {
+                            BoundingMax = new MdlFile.Vector3Struct(1, 1, 1),
+                            BoundingMin = new MdlFile.Vector3Struct(-1, -1, -1),
+                        });
+
 
                     mdlFile.Save($"{name}NEW.mdl");
 

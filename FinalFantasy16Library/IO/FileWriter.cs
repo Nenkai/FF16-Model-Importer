@@ -10,8 +10,8 @@ namespace AvaloniaToolbox.Core.IO
 {
     public class FileWriter : BinaryDataWriter
     {
-        public FileWriter(Stream stream) : base(stream) { }
-        public FileWriter(string path) : base(new FileStream(path, FileMode.Create, FileAccess.Write)) { }
+        public FileWriter(Stream stream) : base(stream, Encoding.UTF8) { }
+        public FileWriter(string path) : base(new FileStream(path, FileMode.Create, FileAccess.Write), Encoding.UTF8) { }
 
         public void SetByteOrder(bool bigEndian)
         {
@@ -28,7 +28,10 @@ namespace AvaloniaToolbox.Core.IO
         public void WriteStrings(List<string> values, Encoding encoding = null)
         {
             foreach (var value in values)
-                Write(value, BinaryStringFormat.ZeroTerminated, encoding ?? Encoding);
+            {
+                Write(Encoding.GetBytes(value));
+                Write((byte)0);
+            }
         }
 
         public void SeekBegin(uint Offset) { Seek(Offset, SeekOrigin.Begin); }

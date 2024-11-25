@@ -393,7 +393,7 @@ namespace CafeLibrary.ff16
             WriteNameOffsets(writer, this.Part3Names, ref nameOfs);
             writer.Write(ExtraSection);
             writer.Write(McexSection);
-            writer.Align(8);
+            writer.AlignBytes(8);
 
             if (SpecsHeader.JointCount > 0)
                 writer.WriteMultiStruct(JointBoundings);
@@ -451,7 +451,7 @@ namespace CafeLibrary.ff16
             var Part3NamePointers = reader.ReadMultipleStructs<NamePointer>(SpecsHeader.Part3Count);
             ExtraSection = reader.ReadBytes((int)SpecsHeader.ExtraSectionSize); //40 bytes when used
 
-            McexSection = reader.ReadBytes((int)SpecsHeader.McexSize + 8);
+            McexSection = reader.ReadBytes((int)SpecsHeader.McexSize);
             reader.Align(8);
 
             if (SpecsHeader.JointCount > 0)

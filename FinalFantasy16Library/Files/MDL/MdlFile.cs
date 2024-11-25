@@ -460,13 +460,13 @@ namespace CafeLibrary.ff16
             long stringTablePos = reader.Position;
 
             //Read strings with their offset pointers
-            MaterialNames = ReadStrings(reader, stringTablePos, MaterialNamePointers.Select(x => x.Offset).ToArray());
-            JointNames = ReadStrings(reader, stringTablePos, Joints.Select(x => (ulong)x.NameOffset).ToArray());
-            JointFaceNames = ReadStrings(reader, stringTablePos, JointFaceNamePointers);
+            MaterialNames    = ReadStrings(reader, stringTablePos, MaterialNamePointers.Select(x => x.Offset).ToArray());
+            JointNames       = ReadStrings(reader, stringTablePos, Joints.Select(x => (ulong)x.NameOffset).ToArray());
+            JointFaceNames   = ReadStrings(reader, stringTablePos, JointFaceNamePointers);
             JointMuscleNames = ReadStrings(reader, stringTablePos, JointMuscles.Select(x => (ulong)x.NameOffset).ToArray());
-            Part2Names = ReadStrings(reader, SpecsHeader.Part2Count, Part2NamePointers.Select(x => x.Offset).ToArray());
-            Part1Names = ReadStrings(reader, SpecsHeader.Part1Count, Part1NamePointers.Select(x => x.Offset).ToArray());
-            Part3Names = ReadStrings(reader, SpecsHeader.Part3Count, Part3NamePointers.Select(x => x.Offset).ToArray());
+            Part2Names       = ReadStrings(reader, stringTablePos, Part2NamePointers.Select(x => x.Offset).ToArray());
+            Part1Names       = ReadStrings(reader, stringTablePos, Part1NamePointers.Select(x => x.Offset).ToArray());
+            Part3Names       = ReadStrings(reader, stringTablePos, Part3NamePointers.Select(x => x.Offset).ToArray());
 
             Console.WriteLine($"{Part1Names.Count} {Part2Names.Count} {Part3Names.Count} {SpecsHeader.McexSize}");
 

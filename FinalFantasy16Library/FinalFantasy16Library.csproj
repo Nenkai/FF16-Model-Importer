@@ -13,7 +13,12 @@
     <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
     <PackageReference Include="SixLabors.ImageSharp" Version="3.1.5" />
     <PackageReference Include="SkiaSharp" Version="3.0.0-preview.4.1" />
+    <PackageReference Include="Syroot.BinaryData.Memory" Version="6.0.0-alpha.6" />
     <PackageReference Include="Vortice.DirectStorage" Version="3.6.1-beta" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\IONET\IONET\IONET.csproj" />
   </ItemGroup>
 
   <ItemGroup>
@@ -25,9 +30,6 @@
     </Reference>
     <Reference Include="HKLib.Serialization">
       <HintPath>Lib\HKLib.Serialization.dll</HintPath>
-    </Reference>
-    <Reference Include="IONET">
-      <HintPath>Lib\IONET.dll</HintPath>
     </Reference>
     <Reference Include="Syroot.BinaryData">
       <HintPath>Lib\Syroot.BinaryData.dll</HintPath>

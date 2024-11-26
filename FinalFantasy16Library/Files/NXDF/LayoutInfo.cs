@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace FinalFantasyConvertTool.NXDF
+namespace FinalFantasy16Library.Files.NXDF
 {
     public class LayoutInfo
     {

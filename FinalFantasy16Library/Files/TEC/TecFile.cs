@@ -1,5 +1,7 @@
 ﻿using AvaloniaToolbox.Core.IO;
+
 using Syroot.BinaryData;
+
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -8,7 +10,7 @@ using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace MdlTest.ff16
+namespace FinalFantasy16Library.Files.TEC
 {
     public class TecFile
     {
@@ -64,7 +66,7 @@ namespace MdlTest.ff16
                 for (int i = 0; i < prog.Count; i++)
                 {
                     var shaderIdx = IndexTable[prog.Index + i];
-                    var shader = this.Shaders[(int)shaderIdx];
+                    var shader = Shaders[(int)shaderIdx];
 
                     if (i == 0)
                     {
@@ -98,10 +100,12 @@ namespace MdlTest.ff16
 
                 if (dataSize > 0)
                 {
-                    using (reader.TemporarySeek()) {
+                    using (reader.TemporarySeek())
+                    {
                         shader.Info = ReadShaderDefine(reader, shader, shaderDefineIndex);
                     }
-                    using (reader.TemporarySeek(HeaderStart + this.Header.ShaderDataOffset + dataOffset, SeekOrigin.Begin)) {
+                    using (reader.TemporarySeek(HeaderStart + Header.ShaderDataOffset + dataOffset, SeekOrigin.Begin))
+                    {
                         shader.Data = reader.ReadBytes((int)dataSize);
                     }
                 }
@@ -113,15 +117,15 @@ namespace MdlTest.ff16
         {
             ShaderInfo info = new ShaderInfo();
 
-            reader.SeekBegin(HeaderStart + this.Header.ShaderDefineOffset + index * 4);
+            reader.SeekBegin(HeaderStart + Header.ShaderDefineOffset + index * 4);
             ushort shaderInfoIndex = reader.ReadUInt16();
             ushort symbolIndex = reader.ReadUInt16();
 
             //Shader symbol info
-            reader.SeekBegin(HeaderStart + this.Header.ShaderInfoOffset + shaderInfoIndex * 56);
+            reader.SeekBegin(HeaderStart + Header.ShaderInfoOffset + shaderInfoIndex * 56);
             info.Header = reader.ReadStruct<ShaderInfoHeader>();
 
-            reader.SeekBegin(HeaderStart + this.Header.ShaderSymbolsOffset + symbolIndex * 4);
+            reader.SeekBegin(HeaderStart + Header.ShaderSymbolsOffset + symbolIndex * 4);
             info.UniformBlocks = ReadSymbols(reader, info.Header.BlockCount);
             info.Uniforms = ReadSymbols(reader, info.Header.UniformCount);
             info.Samplers = ReadSymbols(reader, info.Header.SamplerCount);
@@ -140,7 +144,8 @@ namespace MdlTest.ff16
                 ushort nameOffset = reader.ReadUInt16();
                 symbols.Add(symbol);
 
-                using (reader.TemporarySeek(HeaderStart + Header.StringTableOffset + nameOffset, SeekOrigin.Begin)) {
+                using (reader.TemporarySeek(HeaderStart + Header.StringTableOffset + nameOffset, SeekOrigin.Begin))
+                {
                     symbol.Name = reader.ReadStringZeroTerminated();
                 }
             }
@@ -187,7 +192,7 @@ namespace MdlTest.ff16
             public uint ShaderDefineOffset;
             public uint ShaderDefineCount;
 
-            public uint ShaderDataOffset; 
+            public uint ShaderDataOffset;
             public uint ShaderDataSize; //total shader data size
 
             public uint StringTableOffset;

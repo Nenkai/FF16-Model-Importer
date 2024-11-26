@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 using Vortice.DirectStorage;
 using SharpGen.Runtime;
 
-namespace CafeLibrary.Formats.FF16.Shared
+namespace FinalFantasy16Library.Files.Shared
 {
     public class GDeflate
     {

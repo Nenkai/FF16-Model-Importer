@@ -1,4 +1,5 @@
 ﻿using AvaloniaToolbox.Core.IO;
+
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -7,7 +8,7 @@ using System.Text;
 using System.Text.Json.Serialization;
 using System.Threading.Tasks;
 
-namespace CafeLibrary.ff16
+namespace FinalFantasy16Library.Files.MTL
 {
     public class MtlFile
     {
@@ -38,7 +39,8 @@ namespace CafeLibrary.ff16
 
         public void Save(string path)
         {
-            using (var fs = new FileStream(path, FileMode.Create, FileAccess.Write)) {
+            using (var fs = new FileStream(path, FileMode.Create, FileAccess.Write))
+            {
                 Save(fs);
             }
         }
@@ -46,7 +48,7 @@ namespace CafeLibrary.ff16
         public void Save(Stream stream)
         {
             using (var writer = new FileWriter(stream))
-                this.Write(writer);
+                Write(writer);
         }
 
         private void Read(FileReader reader)
@@ -86,7 +88,8 @@ namespace CafeLibrary.ff16
             ushort paramSize = reader.ReadUInt16();
             ushort numTotalTextures = reader.ReadUInt16();
 
-            int Align(int pos, int alignment) {
+            int Align(int pos, int alignment)
+            {
 
                 var amount = (-pos % alignment + alignment) % alignment;
                 return pos + amount;
@@ -131,7 +134,7 @@ namespace CafeLibrary.ff16
                 byte slot = reader.ReadByte();
                 byte type = reader.ReadByte(); //0 = path, 1 == constant
 
-                TextureBindInfos.Add(new TextureBindInfo() { Slot = slot, Type = type,  });
+                TextureBindInfos.Add(new TextureBindInfo() { Slot = slot, Type = type, });
             }
         }
 
@@ -160,18 +163,18 @@ namespace CafeLibrary.ff16
                 }
 
                 AddString(ShaderPath);
-                for (int i = 0; i < this.TextureBindInfos.Count; i++)
+                for (int i = 0; i < TextureBindInfos.Count; i++)
                 {
-                    if (this.TextureBindInfos[i].Type == 0)
+                    if (TextureBindInfos[i].Type == 0)
                     {
-                        var texturePath = TexturePaths[this.TextureBindInfos[i].Slot];
+                        var texturePath = TexturePaths[TextureBindInfos[i].Slot];
 
                         AddString(texturePath.Name);
                         AddString(texturePath.Path);
                     }
                     else
                     {
-                        var textureConst = TextureConstants[this.TextureBindInfos[i].Slot];
+                        var textureConst = TextureConstants[TextureBindInfos[i].Slot];
                         AddString(textureConst.Name);
                     }
                 }
@@ -188,57 +191,57 @@ namespace CafeLibrary.ff16
             writer.Write(0); //size later
             writer.Write(0);
 
-            writer.Write((ushort)this.TexturePaths.Count);
-            writer.Write((byte)ParamFlag);
-            writer.Write((byte)Unknown1);
-            writer.Write(Align(this.ParamData.Length * 4 + TextureBindInfos.Count * 2, 16)); //Param section size
+            writer.Write((ushort)TexturePaths.Count);
+            writer.Write(ParamFlag);
+            writer.Write(Unknown1);
+            writer.Write(Align(ParamData.Length * 4 + TextureBindInfos.Count * 2, 16)); //Param section size
             writer.Write((ushort)TextureConstants.Count);
             writer.Write((ushort)(string.IsNullOrEmpty(ShaderPath) ? 0 : 1));
-            writer.Write((ushort)Unknown2);
+            writer.Write(Unknown2);
             writer.Write((byte)0);
-            writer.Write((byte)Unknown3);
-            writer.Write((ushort)(this.ParamData.Length * 4));
-            writer.Write((ushort)(this.TextureBindInfos.Count));
+            writer.Write(Unknown3);
+            writer.Write((ushort)(ParamData.Length * 4));
+            writer.Write((ushort)TextureBindInfos.Count);
 
-            WriteStringOffset(this.ShaderPath);
+            WriteStringOffset(ShaderPath);
 
-            for (int i = 0; i < this.TexturePaths.Count; i++)
+            for (int i = 0; i < TexturePaths.Count; i++)
             {
-                WriteStringOffset(this.TexturePaths[i].Path);
-                WriteStringOffset(this.TexturePaths[i].Name);
+                WriteStringOffset(TexturePaths[i].Path);
+                WriteStringOffset(TexturePaths[i].Name);
             }
-            for (int i = 0; i < this.TextureConstants.Count; i++)
+            for (int i = 0; i < TextureConstants.Count; i++)
             {
-                writer.Write((ushort)this.TextureConstants[i].Type);
-                writer.Write(this.TextureConstants[i].Name != null && 
-                    strings.ContainsKey(this.TextureConstants[i].Name) ? 
-                        (ushort)strings[this.TextureConstants[i].Name] : (ushort)0);
+                writer.Write((ushort)TextureConstants[i].Type);
+                writer.Write(TextureConstants[i].Name != null &&
+                    strings.ContainsKey(TextureConstants[i].Name) ?
+                        (ushort)strings[TextureConstants[i].Name] : (ushort)0);
 
-                if (this.TextureConstants[i].Value is Half)
+                if (TextureConstants[i].Value is Half)
                 {
-                    writer.Write((Half)this.TextureConstants[i].Value);
+                    writer.Write((Half)TextureConstants[i].Value);
                     writer.Align(4);
                 }
-                else if (this.TextureConstants[i].Value is float)
+                else if (TextureConstants[i].Value is float)
                 {
-                    writer.Write((Half)(float)this.TextureConstants[i].Value);
+                    writer.Write((Half)(float)TextureConstants[i].Value);
                     writer.Align(4);
                 }
                 else
                 {
-                    writer.Write(((Rgba)this.TextureConstants[i].Value).R);
-                    writer.Write(((Rgba)this.TextureConstants[i].Value).G);
-                    writer.Write(((Rgba)this.TextureConstants[i].Value).B);
-                    writer.Write(((Rgba)this.TextureConstants[i].Value).A);
+                    writer.Write(((Rgba)TextureConstants[i].Value).R);
+                    writer.Write(((Rgba)TextureConstants[i].Value).G);
+                    writer.Write(((Rgba)TextureConstants[i].Value).B);
+                    writer.Write(((Rgba)TextureConstants[i].Value).A);
                 }
             }
             writer.AlignBytes(16);
-            writer.Write(this.ParamData);
+            writer.Write(ParamData);
 
-            for (int i = 0; i < this.TextureBindInfos.Count; i++)
+            for (int i = 0; i < TextureBindInfos.Count; i++)
             {
-                writer.Write(this.TextureBindInfos[i].Slot);
-                writer.Write(this.TextureBindInfos[i].Type);
+                writer.Write(TextureBindInfos[i].Slot);
+                writer.Write(TextureBindInfos[i].Type);
             }
 
             writer.AlignBytes(16);
@@ -253,7 +256,8 @@ namespace CafeLibrary.ff16
         {
             uint offset = reader.ReadUInt32();
 
-            using (reader.TemporarySeek(stringTablePos + offset, SeekOrigin.Begin)) {
+            using (reader.TemporarySeek(stringTablePos + offset, SeekOrigin.Begin))
+            {
                 return reader.ReadStringZeroTerminated();
             }
         }
@@ -262,7 +266,8 @@ namespace CafeLibrary.ff16
         {
             ushort offset = reader.ReadUInt16();
 
-            using (reader.TemporarySeek(stringTablePos + offset, SeekOrigin.Begin)) {
+            using (reader.TemporarySeek(stringTablePos + offset, SeekOrigin.Begin))
+            {
                 return reader.ReadStringZeroTerminated();
             }
         }
@@ -291,10 +296,10 @@ namespace CafeLibrary.ff16
 
             public Rgba(byte[] rgba)
             {
-                this.R = rgba[0];
-                this.G = rgba[1];
-                this.B = rgba[2];
-                this.A = rgba[3];
+                R = rgba[0];
+                G = rgba[1];
+                B = rgba[2];
+                A = rgba[3];
             }
         }
 

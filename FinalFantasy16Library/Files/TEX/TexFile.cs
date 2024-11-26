@@ -7,21 +7,27 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Xml.Linq;
 using System.Xml.Serialization;
+
 using AvaloniaToolbox.Core;
 using AvaloniaToolbox.Core.IO;
 using AvaloniaToolbox.Core.Textures;
+
 using BCnEncoder.Shared;
-using CafeLibrary.Formats.FF16.Shared;
+
 using CommunityToolkit.HighPerformance.Buffers;
-using FF16Converter;
+
+using FinalFantasy16Library.Files.Shared;
+using FinalFantasy16Library.Utils;
+
 using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.ColorSpaces;
 using SixLabors.ImageSharp.PixelFormats;
 using SixLabors.ImageSharp.Processing;
+
 using Vortice.DirectStorage;
 using Vortice.DXGI;
 
-namespace FinalFantasy16
+namespace FinalFantasy16Library.Files.TEX
 {
     //Info based on https://github.com/Nenkai/FF16Tools/blob/master/FF16Tools.Files/Textures/TextureFile.cs
     public class TexFile
@@ -68,7 +74,7 @@ namespace FinalFantasy16
             public byte Dimension
             {
                 get => (byte)BitUtils.GetBits((int)Flags, 0, 2);
-                set => Flags = (uint)BitUtils.SetBits((int)Flags, (int)value, 0, 2);
+                set => Flags = (uint)BitUtils.SetBits((int)Flags, value, 0, 2);
             }
 
             public bool SignedDistanceField
@@ -86,13 +92,13 @@ namespace FinalFantasy16
             public byte UnknownBits1
             {
                 get => (byte)BitUtils.GetBits((int)Flags, 4, 2);
-                set => Flags = (uint)BitUtils.SetBits((int)Flags, (int)value, 4, 2);
+                set => Flags = (uint)BitUtils.SetBits((int)Flags, value, 4, 2);
             }
 
             public byte UnknownBits2
             {
                 get => (byte)BitUtils.GetBits((int)Flags, 6, 2);
-                set => Flags = (uint)BitUtils.SetBits((int)Flags, (int)value, 6, 2);
+                set => Flags = (uint)BitUtils.SetBits((int)Flags, value, 6, 2);
             }
 
             public uint UnknownBits24
@@ -103,11 +109,11 @@ namespace FinalFantasy16
 
             public Texture()
             {
-                this.Dimension = 1;
-                this.UnknownBits2 = 2;
-                this.UnknownBits24 = 0xFFFFFF;
-                this.Depth = 1;
-                this.Color = 0xFFA6AFC7;
+                Dimension = 1;
+                UnknownBits2 = 2;
+                UnknownBits24 = 0xFFFFFF;
+                Depth = 1;
+                Color = 0xFFA6AFC7;
             }
 
             public byte[] GetImageData()
@@ -141,10 +147,10 @@ namespace FinalFantasy16
             {
                 var data = TextureDataUtil.GetUnalignedData(this, GetImageData());
                 //rgba convert
-                var formatDecoder = TexFile.FormatList[(int)this.Format];
-                var rgba = formatDecoder.Decode(data, this.Width, this.Height);
+                var formatDecoder = FormatList[(int)Format];
+                var rgba = formatDecoder.Decode(data, Width, Height);
 
-                return Image.LoadPixelData<Rgba32>(rgba, (int)this.Width, (int)this.Height);
+                return Image.LoadPixelData<Rgba32>(rgba, Width, Height);
             }
 
             public void Export(string path)
@@ -152,22 +158,22 @@ namespace FinalFantasy16
                 if (path.EndsWith(".dds"))
                 {
                     var dds = new DDS();
-                    dds.MainHeader.Width = this.Width;
-                    dds.MainHeader.Height = this.Height;
+                    dds.MainHeader.Width = Width;
+                    dds.MainHeader.Height = Height;
                     dds.MainHeader.Depth = Depth;
                     dds.MainHeader.MipCount = MipCount;
 
-                    dds.ImageData = TextureDataUtil.GetUnalignedData(this, this.GetImageData());
+                    dds.ImageData = TextureDataUtil.GetUnalignedData(this, GetImageData());
                     dds.MainHeader.PitchOrLinearSize = (uint)dds.ImageData.Length;
 
                     DDS.DXGI_FORMAT format = DDS.DXGI_FORMAT.DXGI_FORMAT_R8G8B8A8_UNORM;
 
-                    var formatEncoder = TexFile.FormatList[(int)this.Format];
+                    var formatEncoder = FormatList[(int)Format];
                     if (formatEncoder is Bcn)
                         format = ((Bcn)formatEncoder).GetDxgiFormat();
                     else
                     {
-                        switch (this.Format)
+                        switch (Format)
                         {
                             case TextureFormat.R8_UNORM:
                                 format = DDS.DXGI_FORMAT.DXGI_FORMAT_R8_UNORM;
@@ -200,7 +206,7 @@ namespace FinalFantasy16
                                 format = DDS.DXGI_FORMAT.DXGI_FORMAT_R10G10B10A2_UNORM;
                                 break;
                             default:
-                                throw new Exception($"Unsupported rgba format {this.Format}!");
+                                throw new Exception($"Unsupported rgba format {Format}!");
                         }
                     }
 
@@ -218,24 +224,24 @@ namespace FinalFantasy16
                 {
                     var data = TextureDataUtil.GetUnalignedData(this, GetImageData());
                     //rgba convert
-                    var formatDecoder = TexFile.FormatList[(int)this.Format];
-                    var rgba = formatDecoder.Decode(data, this.Width, this.Height);
+                    var formatDecoder = FormatList[(int)Format];
+                    var rgba = formatDecoder.Decode(data, Width, Height);
 
-                    var image = Image.LoadPixelData<Rgba32>(rgba, (int)this.Width, (int)this.Height);
+                    var image = Image.LoadPixelData<Rgba32>(rgba, Width, Height);
                     image.SaveAsPng(path);
                 }
             }
 
             public void Replace(Image<Rgba32> image)
             {
-                this.Width = (ushort)image.Width;
-                this.Height = (ushort)image.Height;
+                Width = (ushort)image.Width;
+                Height = (ushort)image.Height;
                 var mipCount = (ushort)CalculateMipCount();
                 //Use original mip count unless computed is too low
-                if (this.MipCount < mipCount && MipCount != 1)
-                    this.MipCount = mipCount;
+                if (MipCount < mipCount && MipCount != 1)
+                    MipCount = mipCount;
 
-                var mipmaps = ImageSharpTextureHelper.GenerateMipmaps(image, this.MipCount);
+                var mipmaps = ImageSharpTextureHelper.GenerateMipmaps(image, MipCount);
 
                 //padding for rgba
                 List<byte[]> encoded_mips = new List<byte[]>();
@@ -243,11 +249,11 @@ namespace FinalFantasy16
                 {
                     var imageMipmap = mipmaps[i];
                     var rgba = imageMipmap.GetSourceInBytes();
-                    var mipWidth = (uint)TextureDataUtil.CalculateMipDimension(this.Width, i);
-                    var mipHeight = (uint)TextureDataUtil.CalculateMipDimension(this.Height, i);
+                    var mipWidth = (uint)TextureDataUtil.CalculateMipDimension(Width, i);
+                    var mipHeight = (uint)TextureDataUtil.CalculateMipDimension(Height, i);
 
                     //rgba convert
-                    var formatEncoder = TexFile.FormatList[(int)this.Format];
+                    var formatEncoder = FormatList[(int)Format];
                     var encoded = formatEncoder.Encode(rgba, mipWidth, mipHeight);
                     encoded_mips.Add(encoded);
 
@@ -261,30 +267,30 @@ namespace FinalFantasy16
                 if (path.EndsWith(".dds"))
                 {
                     var dds = new DDS(path);
-                    this.Width = (ushort)dds.MainHeader.Width;
-                    this.Height = (ushort)dds.MainHeader.Height;
-                    this.Depth = (ushort)dds.MainHeader.Depth;
-                    this.MipCount = (ushort)dds.MainHeader.MipCount;
+                    Width = (ushort)dds.MainHeader.Width;
+                    Height = (ushort)dds.MainHeader.Height;
+                    Depth = (ushort)dds.MainHeader.Depth;
+                    MipCount = (ushort)dds.MainHeader.MipCount;
 
                     var encoder = DDS.FormatList[(int)dds.Format];
                     if (!FormatList.Any(x => x.Value.ToString() == encoder.ToString()))
                         throw new Exception($"Texture does not support format {encoder.ToString()}");
 
-                    this.Format = (TextureFormat)FormatList.FirstOrDefault(X => X.Value.ToString() == encoder.ToString()).Key;
+                    Format = (TextureFormat)FormatList.FirstOrDefault(X => X.Value.ToString() == encoder.ToString()).Key;
 
                     SetImageData(TextureDataUtil.GetAlignedData(this, dds.ImageData));
                 }
                 else
                 {
                     var image = Image.Load<Rgba32>(path);
-                    this.Width = (ushort)image.Width;
-                    this.Height = (ushort)image.Height;
+                    Width = (ushort)image.Width;
+                    Height = (ushort)image.Height;
                     var mipCount = (ushort)CalculateMipCount();
                     //Use original mip count unless computed is too low
-                    if (this.MipCount < mipCount && MipCount != 1)
-                        this.MipCount = mipCount;
+                    if (MipCount < mipCount && MipCount != 1)
+                        MipCount = mipCount;
 
-                    var mipmaps = ImageSharpTextureHelper.GenerateMipmaps(image, this.MipCount);
+                    var mipmaps = ImageSharpTextureHelper.GenerateMipmaps(image, MipCount);
 
                     //padding for rgba
                     List<byte[]> encoded_mips = new List<byte[]>();
@@ -292,11 +298,11 @@ namespace FinalFantasy16
                     {
                         var imageMipmap = mipmaps[i];
                         var rgba = imageMipmap.GetSourceInBytes();
-                        var mipWidth = (uint)TextureDataUtil.CalculateMipDimension(this.Width, i);
-                        var mipHeight = (uint)TextureDataUtil.CalculateMipDimension(this.Height, i);
+                        var mipWidth = (uint)TextureDataUtil.CalculateMipDimension(Width, i);
+                        var mipHeight = (uint)TextureDataUtil.CalculateMipDimension(Height, i);
 
                         //rgba convert
-                        var formatEncoder = TexFile.FormatList[(int)this.Format];
+                        var formatEncoder = FormatList[(int)Format];
                         var encoded = formatEncoder.Encode(rgba, mipWidth, mipHeight);
                         encoded_mips.Add(encoded);
 
@@ -345,7 +351,7 @@ namespace FinalFantasy16
 
             public byte[] Decompress(byte[] data)
             {
-                IsCompressed = DecompressedSize != this.CompressedSize;
+                IsCompressed = DecompressedSize != CompressedSize;
                 if (!IsCompressed)
                 {
                     return data;
@@ -397,13 +403,13 @@ namespace FinalFantasy16
 
         public TexFile(Stream stream, string path = "")
         {
-            this.Path = path;
+            Path = path;
             Read(stream);
         }
 
         public TexFile(string path)
         {
-            this.Path = path;
+            Path = path;
             Read(File.OpenRead(path));
         }
 
@@ -521,13 +527,13 @@ namespace FinalFantasy16
                 writer.AlignBytes(16);
 
                 //texture data offset
-                writer.WriteUint32Offset(textureHeaderPos + (0 * 32) + 16);
+                writer.WriteUint32Offset(textureHeaderPos + 0 * 32 + 16);
 
                 for (int i = 0; i < compressed.Count; i++)
                 {
                     writer.AlignBytes(8);
                     //chunk data offset
-                    writer.WriteUint32Offset(chunk_start + (i * 16));
+                    writer.WriteUint32Offset(chunk_start + i * 16);
                     writer.Write(compressed[i]);
                 }
             }

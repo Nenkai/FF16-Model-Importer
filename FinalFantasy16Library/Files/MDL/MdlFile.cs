@@ -412,6 +412,7 @@ public class MdlFile
         writer.Write(Version);
         writer.Write(MainFlags);
         writer.Write(ModelType);
+        writer.Write((byte)0);
         writer.Write(0); //mat size later
         writer.Write(0); //mesh spec size later
         writer.Write((ushort)MaterialFileNames.Count);
@@ -419,6 +420,7 @@ public class MdlFile
         writer.Write((byte)AttributeSets.Count);
         writer.Write((byte)LODModels.Count); //LOD count
         writer.Write(UnkFlags_0x16);
+        writer.Write((byte)0);
 
         //vertex buffer offsets
         long ofsVbufferPos = writer.Position;

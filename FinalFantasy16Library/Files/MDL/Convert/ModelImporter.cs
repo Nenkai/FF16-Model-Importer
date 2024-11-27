@@ -209,7 +209,7 @@ public class ModelImporter
         if (iomesh.HasUVSet(3)) mesh.TexCoordSetFlag |= MdlMeshTexCoordFlags.USE_UV3;
 
         //Second flag, unsure what this does
-        mesh.Flag2 = 18;
+        mesh.Flag2 = 0;
 
         mesh.MaterialID = 0;
         if (mdlFile.MaterialNames.Contains(materialName))

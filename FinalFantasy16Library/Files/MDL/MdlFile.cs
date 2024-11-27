@@ -11,6 +11,7 @@ using System.Numerics;
 using AvaloniaToolbox.Core.IO;
 
 using FinalFantasy16Library.Files.MDL.Helpers;
+using FinalFantasy16Library.Files.MDL.Convert;
 
 namespace FinalFantasy16Library.Files.MDL;
 
@@ -114,7 +115,7 @@ public class MdlFile
     /// </summary>
     private List<MdlJointBounding> JointBoundings = [];
 
-    public float[] JointMaxBounds = [float.MinValue, float.MinValue, float.MinValue, 
+    public float[] JointMaxBounds = [float.MinValue, float.MinValue, float.MinValue,
                                      float.MaxValue, float.MaxValue, float.MaxValue];
 
     /// <summary>
@@ -161,6 +162,23 @@ public class MdlFile
 
     //Extra section at the end with an unknown purpose
     private byte[] ExtraSection2 = [];
+
+    // Add field to store data for bones not in base MDL file
+    private List<GeneratedJointData> _generatedJoints;
+
+    // Add generated data to existing joint collections
+    public void SetGeneratedJoints(IEnumerable<GeneratedJointData> joints)
+    {
+        _generatedJoints = new List<GeneratedJointData>(joints);
+
+        foreach (var genJoint in _generatedJoints.OrderBy(j => j.Index))
+        {
+            Joints.Add(genJoint.Joint);
+            JointBoundings.Add(genJoint.Bounding);
+            JointNames.Add(genJoint.Name);
+        }
+    }
+
 
 
     public MdlFile(Stream stream)

@@ -179,7 +179,11 @@ public class Program
             {
                 //Import LOD level
                 importer.Import(mdlFile, inputPath, false);
+
+                // Prepare generated joint info for extra bones not found in base MDL file
+                mdlFile.SetGeneratedJoints(importer.GeneratedJoints);
             }
+
         }
 
         string outputModelFile = $"{fullPath}NEW.mdl";

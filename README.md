@@ -21,8 +21,10 @@ Commands:
 To properly import to MDL, your GLTF model must point to only materials that are used by the "base" MDL file. You can look up the materials using a hex editor. 
 Example: One of the materials that Clive's `chara/c1001/model/body/b0001/body.mdl` model uses is named `m_c1001b0001_body_a.mtl`. To assign that file to your mesh, create a material named `m_body_a` and make sure to include materials when generating your GLTF file. 
 
-Credits:
-- KillzXGaming for original version of this tool
-- Nenkai for code revisions, MDL file research, and pac handling needed to get .skl data and some .tex info
-- Joschuka/Dimy and others for various research and help for MDL file binary
-- Maybri for additional documentation and added functionality to handle bones not present in "base" MDL 
+
+## Contributors and donation links
+
+- KillzXGaming: Original author of this tool  [donate](https://ko-fi.com/simplykxg)
+- Nenkai: Code revisions, MDL file research, and pac handling needed to get .skl data and some .tex info  [donate](https://ko-fi.com/nenkai)
+- Joschuka/Dimy and others: Various research and assistance on MDL file binary
+- Maybri: Additional documentation and functionality to handle bones not present in "base" MDL 

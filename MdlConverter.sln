@@ -7,6 +7,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MdlConverter", "MdlConverte
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "FinalFantasy16Library", "FinalFantasy16Library\FinalFantasy16Library.csproj", "{6A26D528-CA8D-4CF8-8654-F6394355D94D}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "IONET", "IONET\IONET\IONET.csproj", "{567B07D2-CB62-4474-A3B8-FBD74D6A5D03}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -21,6 +23,10 @@ Global
 		{6A26D528-CA8D-4CF8-8654-F6394355D94D}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{6A26D528-CA8D-4CF8-8654-F6394355D94D}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{6A26D528-CA8D-4CF8-8654-F6394355D94D}.Release|Any CPU.Build.0 = Release|Any CPU
+		{567B07D2-CB62-4474-A3B8-FBD74D6A5D03}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{567B07D2-CB62-4474-A3B8-FBD74D6A5D03}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{567B07D2-CB62-4474-A3B8-FBD74D6A5D03}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{567B07D2-CB62-4474-A3B8-FBD74D6A5D03}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

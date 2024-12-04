@@ -1,9 +1,13 @@
 ﻿using AvaloniaToolbox.Core.IO;
-using FinalFantasy16;
+
+using FinalFantasy16Library.Files.TEX;
+
 using SharpGen.Runtime;
+
 using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.PixelFormats;
 using SixLabors.ImageSharp.Processing;
+
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -13,7 +17,7 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Xml.Serialization;
 
-namespace FF16Tool
+namespace FinalFantasy16Library.Files.FNT
 {
     public class FontFile
     {
@@ -24,7 +28,7 @@ namespace FF16Tool
 
         public ushort Unknown;
 
-        public ushort[] CharTable = new ushort[CHAR_TABLE_COUNT];   
+        public ushort[] CharTable = new ushort[CHAR_TABLE_COUNT];
 
         public string TextureFileName;
         public string KerningFileName;
@@ -45,7 +49,8 @@ namespace FF16Tool
 
         public void Save(string path)
         {
-            using (var fs = new FileStream(path, FileMode.Create, FileAccess.Write)) {
+            using (var fs = new FileStream(path, FileMode.Create, FileAccess.Write))
+            {
                 Write(new FileWriter(fs));
             }
         }
@@ -69,7 +74,7 @@ namespace FF16Tool
 
             reader.SeekBegin(64);
             TextureFileName = reader.ReadStringZeroTerminated();
-            KerningFileName  = reader.ReadStringZeroTerminated();
+            KerningFileName = reader.ReadStringZeroTerminated();
 
             reader.SeekBegin(64 + stringPoolSize);
             //a big table of character indices that index the glyph list by character code
@@ -85,8 +90,8 @@ namespace FF16Tool
                 glyphs[i].SpacingCount = reader.ReadUInt16(); //counter to char space section after
                 glyphs[i].SpacingIndex = reader.ReadUInt32(); //index to char space section after
 
-                glyphs[i].OffsetX = reader.ReadSingle(); 
-                glyphs[i].OffsetY = reader.ReadSingle(); 
+                glyphs[i].OffsetX = reader.ReadSingle();
+                glyphs[i].OffsetY = reader.ReadSingle();
                 glyphs[i].CharacterWidth = reader.ReadSingle(); //advances X
                 float zero = reader.ReadSingle(); //0
 
@@ -124,7 +129,7 @@ namespace FF16Tool
 
         public void Write(FileWriter writer)
         {
-            foreach (var g in this.FontGlyphs)
+            foreach (var g in FontGlyphs)
                 g.FontSpacing.Clear();
 
             writer.Write(Encoding.ASCII.GetBytes("FNT "));
@@ -132,16 +137,16 @@ namespace FF16Tool
             writer.Write(0); //string pool size later
             writer.Write(0); //data size later
 
-            writer.Write((ushort)Unknown);
-            writer.Write((ushort)this.FontGlyphs.Count);
-            writer.Write((ushort)this.FontGlyphs.Sum(x => x.FontSpacing.Count));
+            writer.Write(Unknown);
+            writer.Write((ushort)FontGlyphs.Count);
+            writer.Write((ushort)FontGlyphs.Sum(x => x.FontSpacing.Count));
             writer.Write((ushort)0); //padding
 
             writer.Write(Params);
-            writer.Write((ushort)Unknown2);
+            writer.Write(Unknown2);
             writer.Write((ushort)(Width * 4));
             writer.Write((ushort)(Height * 4));
-            writer.Write((ushort)Unknown3);
+            writer.Write(Unknown3);
 
             writer.SeekBegin(64);
 
@@ -161,7 +166,7 @@ namespace FF16Tool
             writer.Write(CharTable);
 
             int fontSpaceIdx = 0;
-            foreach (var g in this.FontGlyphs)
+            foreach (var g in FontGlyphs)
             {
                 writer.Write((ushort)0);
                 writer.Write((ushort)g.FontSpacing.Count);
@@ -178,12 +183,12 @@ namespace FF16Tool
 
                 fontSpaceIdx += g.FontSpacing.Count;
             }
-            foreach (var g in this.FontGlyphs)
+            foreach (var g in FontGlyphs)
             {
                 foreach (var s in g.FontSpacing)
                 {
-                    writer.Write((ushort)s.Char1);
-                    writer.Write((ushort)s.Char2);
+                    writer.Write(s.Char1);
+                    writer.Write(s.Char2);
                     writer.Write(s.OffsetX);
                     writer.Write(s.OffsetY);
                 }
@@ -196,9 +201,9 @@ namespace FF16Tool
         public void Export(TexFile texFile)
         {
             var image = texFile.Textures[0].GetImage();
-            for (int i = 0; i < this.FontGlyphs.Count; i++)
+            for (int i = 0; i < FontGlyphs.Count; i++)
             {
-                var g = this.FontGlyphs[i];
+                var g = FontGlyphs[i];
                 if (g.BitmapWidth == 0)
                     continue;
 
@@ -211,7 +216,7 @@ namespace FF16Tool
 
         public string ToXml()
         {
-            using (var writer = new System.IO.StringWriter())
+            using (var writer = new StringWriter())
             {
                 var serializer = new XmlSerializer(typeof(FontFile));
                 serializer.Serialize(writer, this);

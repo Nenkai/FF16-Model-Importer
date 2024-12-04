@@ -1,46 +1,46 @@
 ﻿using SkiaSharp;
+
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace FinalFantasyConvertTool
+namespace FinalFantasy16Library.Files.FNT;
+
+public class SKHelper
 {
-    public class SKHelper
+    public static SKBitmap CreateBitmap(byte[] rgba, int width, int height)
     {
-        public static SKBitmap CreateBitmap(byte[] rgba, int width, int height)
+        // Create an SKBitmap with the specified width and height
+        SKBitmap bitmap = new SKBitmap(width, height, SKColorType.Rgba8888, SKAlphaType.Premul);
+
+        // Lock the bitmap's pixel buffer
+        using (var pixmap = bitmap.PeekPixels())
         {
-            // Create an SKBitmap with the specified width and height
-            SKBitmap bitmap = new SKBitmap(width, height, SKColorType.Rgba8888, SKAlphaType.Premul);
-
-            // Lock the bitmap's pixel buffer
-            using (var pixmap = bitmap.PeekPixels())
-            {
-                // Copy the RGBA byte array into the bitmap's pixel buffer
-                System.Runtime.InteropServices.Marshal.Copy(rgba, 0, pixmap.GetPixels(), rgba.Length);
-            }
-
-            return bitmap;
+            // Copy the RGBA byte array into the bitmap's pixel buffer
+            System.Runtime.InteropServices.Marshal.Copy(rgba, 0, pixmap.GetPixels(), rgba.Length);
         }
 
-        public static byte[] GetImagePixelData(SKImage image)
+        return bitmap;
+    }
+
+    public static byte[] GetImagePixelData(SKImage image)
+    {
+        using (SKPixmap pixmap = image.PeekPixels())
         {
-            using (SKPixmap pixmap = image.PeekPixels())
-            {
-                int size = pixmap.Width * pixmap.Height * pixmap.BytesPerPixel;
-                byte[] pixelData = new byte[size];
+            int size = pixmap.Width * pixmap.Height * pixmap.BytesPerPixel;
+            byte[] pixelData = new byte[size];
 
-                var handle = System.Runtime.InteropServices.GCHandle.Alloc(pixelData, System.Runtime.InteropServices.GCHandleType.Pinned);
-                IntPtr ptr = handle.AddrOfPinnedObject();
+            var handle = System.Runtime.InteropServices.GCHandle.Alloc(pixelData, System.Runtime.InteropServices.GCHandleType.Pinned);
+            nint ptr = handle.AddrOfPinnedObject();
 
-                SKImageInfo info = new SKImageInfo(pixmap.Width, pixmap.Height, SKColorType.Rgba8888, SKAlphaType.Premul);
-                pixmap.ReadPixels(info, ptr, pixmap.RowBytes, 0, 0);
+            SKImageInfo info = new SKImageInfo(pixmap.Width, pixmap.Height, SKColorType.Rgba8888, SKAlphaType.Premul);
+            pixmap.ReadPixels(info, ptr, pixmap.RowBytes, 0, 0);
 
-                handle.Free();
+            handle.Free();
 
-                return pixelData;
-            }
+            return pixelData;
         }
     }
 }

@@ -1,13 +1,14 @@
-﻿using AvaloniaToolbox.Core;
-using AvaloniaToolbox.Core.Textures;
-using FinalFantasy16;
+﻿using AvaloniaToolbox.Core.Textures;
+
+using FinalFantasy16Library.Utils;
+
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace FF16Converter
+namespace FinalFantasy16Library.Files.TEX
 {
     public class TextureDataUtil
     {
@@ -15,7 +16,7 @@ namespace FF16Converter
 
         private static uint Align(uint value, uint alignment)
         {
-            return (value + (alignment - 1)) & ~(alignment - 1);
+            return value + (alignment - 1) & ~(alignment - 1);
         }
 
         /// <summary>
@@ -45,13 +46,13 @@ namespace FF16Converter
                     aligned_size = slice;
 
                 if (ofs + aligned_size > data.Length)
-                    aligned_size = (int)(data.Length - ofs);
+                    aligned_size = data.Length - ofs;
 
                 byte[] buffer = new byte[aligned_size];
-                data.AsSpan().Slice(ofs, (int)aligned_size).CopyTo(buffer);
+                data.AsSpan().Slice(ofs, aligned_size).CopyTo(buffer);
                 mipmaps.Add(buffer);
 
-                ofs += (int)aligned_size;
+                ofs += aligned_size;
             }
 
             return ByteUtil.CombineByteArray(mipmaps.ToArray());
@@ -111,7 +112,7 @@ namespace FF16Converter
 
                     for (int row = 0; row < blocksHeight; row++)
                     {
-                        int alignedRowStart = mipOffset + (row * alignedRowSize);
+                        int alignedRowStart = mipOffset + row * alignedRowSize;
 
                         byte[] alignedRowData = data.Skip(alignedRowStart).Take(alignedRowSize).ToArray();
                         wr.Write(alignedRowData, 0, originalRowSize);
@@ -182,10 +183,10 @@ namespace FF16Converter
                 for (int y = 0; y < mipHeight; y += 4)
                 {
                     int originalRowSize = blockWidth * blockSize;
-                    int rowStart = (y / 4) * originalRowSize;
+                    int rowStart = y / 4 * originalRowSize;
                     byte[] originalRowData = data.Skip(mipOffset + rowStart).Take(originalRowSize).ToArray();
 
-                    int alignedRowStart = (y / 4) * alignedRowSize;
+                    int alignedRowStart = y / 4 * alignedRowSize;
                     // Transfer data to aligned row
                     Array.Copy(originalRowData, 0, alignedData, alignedRowStart, originalRowSize);
                 }
@@ -193,7 +194,7 @@ namespace FF16Converter
                 mipmaps.Add(alignedData);
 
                 // Update the mip offset to move to the next mip level
-                mipOffset += (mipWidth / 4) * blockSize * blockHeight;
+                mipOffset += mipWidth / 4 * blockSize * blockHeight;
             }
             return mipmaps;
         }
@@ -218,7 +219,7 @@ namespace FF16Converter
 
                 for (int y = 0; y < mipHeight; y++)
                 {
-                    int originalRowSize = mipWidth * (int)bytesPerPixel;
+                    int originalRowSize = mipWidth * bytesPerPixel;
                     int rowStart = y * originalRowSize;
                     byte[] originalRowData = data.Skip(mipOffset + rowStart).Take(originalRowSize).ToArray();
 
@@ -302,7 +303,7 @@ namespace FF16Converter
                     }
                 default:
                     {
-                        pitch = (width) * GetBPP(format);
+                        pitch = width * GetBPP(format);
                         slice = pitch * height;
                         alignedSlice = (int)Align((uint)pitch, D3D12_TEXTURE_DATA_PITCH_ALIGNMENT) * height;
                         break;

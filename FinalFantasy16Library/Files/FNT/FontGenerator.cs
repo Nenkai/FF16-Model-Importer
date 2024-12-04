@@ -1,13 +1,17 @@
 ﻿using AvaloniaToolbox.Core;
-using FF16Tool;
-using FinalFantasy16;
-using FinalFantasyConvertTool.FNT;
+
+using FinalFantasy16Library.Files.TEX;
+
 using RectpackSharp;
+
 using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.PixelFormats;
 using SixLabors.ImageSharp.Processing;
+
 using SkiaSharp;
+
 using Syroot.BinaryData;
+
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -15,7 +19,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace FinalFantasyConvertTool
+namespace FinalFantasy16Library.Files.FNT
 {
     public class FontGenerator
     {
@@ -69,11 +73,11 @@ namespace FinalFantasyConvertTool
                     clone.Mutate(x => x.Crop(new Rectangle(
                         (int)g.BitmapPosX,
                         (int)g.BitmapPosY,
-                        (int)g.BitmapWidth, 
+                        (int)g.BitmapWidth,
                         (int)g.BitmapHeight)));
 
-                  //  clone.SaveAsPng(Path.Combine("c", $"{(int)g.Character}.png"));
-                    
+                    //  clone.SaveAsPng(Path.Combine("c", $"{(int)g.Character}.png"));
+
                     var rgba = clone.GetSourceInBytes();
                     var w = clone.Width;
                     var h = clone.Height;
@@ -82,7 +86,8 @@ namespace FinalFantasyConvertTool
                     {
                         X = g.BitmapPosX,
                         Y = g.BitmapPosY,
-                        Width = w, Height = h,
+                        Width = w,
+                        Height = h,
                         Data = rgba,
                         AdvanceX = g.CharacterWidth,
                         OffsetX = g.OffsetX,
@@ -123,19 +128,19 @@ namespace FinalFantasyConvertTool
                 float offsetY = bounds.Top;
 
                 if (bounds.Left < 0)
-                    offsetX = bounds.Left + offsets[0].X - (spacing / 2);
+                    offsetX = bounds.Left + offsets[0].X - spacing / 2;
 
                 if (bounds.Top > 0)
                 {
-                    offsetY += (spacing / 2);
+                    offsetY += spacing / 2;
                 }
 
                 //Characters with bounding and offset info
                 glyph.Character = c;
                 glyph.OffsetX = offsetX - 22;
                 glyph.OffsetY = offsetY - 22;
-                if (advanceX  != 0)
-                    glyph.AdvanceX = advanceX + (spacing / 2);
+                if (advanceX != 0)
+                    glyph.AdvanceX = advanceX + spacing / 2;
                 else
                     glyph.AdvanceX = 1;
 
@@ -210,18 +215,18 @@ namespace FinalFantasyConvertTool
 
             RectanglePacker.Pack(rectangles, out PackingRectangle bounds,
                 PackingHints.UnusualSizes |
-                PackingHints.FindBest | 
+                PackingHints.FindBest |
                 PackingHints.TryByArea |
                 PackingHints.MostlySquared);
 
             uint Align(uint value, uint alignment)
             {
-                return (value + (alignment - 1)) & ~(alignment - 1);
+                return value + (alignment - 1) & ~(alignment - 1);
             }
 
             // Create output image
-           // Image<Rgba32> outputImage = new Image<Rgba32>((int)1164, (int)1244, new Rgba32(0, 0, 0, 255));
-             Image<Rgba32> outputImage = new Image<Rgba32>((int)bounds.Width, (int)bounds.Height, new Rgba32(0, 0, 0, 255));
+            // Image<Rgba32> outputImage = new Image<Rgba32>((int)1164, (int)1244, new Rgba32(0, 0, 0, 255));
+            Image<Rgba32> outputImage = new Image<Rgba32>((int)bounds.Width, (int)bounds.Height, new Rgba32(0, 0, 0, 255));
             for (int i = 0; i < glyphs.Count; i++)
             {
                 var id = rectangles[i].Id;
@@ -244,8 +249,8 @@ namespace FinalFantasyConvertTool
                 glyphs[id].Height = h;
 
                 Image<Rgba32> glyphImage = Image.LoadPixelData<Rgba32>(
-                    glyphs[id].Data, 
-                    (int)glyphs[id].Width, 
+                    glyphs[id].Data,
+                    (int)glyphs[id].Width,
                     (int)glyphs[id].Height);
 
                 outputImage.Mutate(ctx => ctx.DrawImage(glyphImage, new Point(x, y), 1f));
@@ -262,7 +267,7 @@ namespace FinalFantasyConvertTool
             public float Height { get; set; }
             public float X { get; set; }
             public float Y { get; set; }
-            public float OffsetX { get; set; }  
+            public float OffsetX { get; set; }
             public float OffsetY { get; set; }
             public float AdvanceX { get; set; }
 
@@ -279,8 +284,8 @@ namespace FinalFantasyConvertTool
             public void PrepareCharacterSettings()
             {
                 CharactersImport = "";
-              //  for (int i = 32; i < 255; i++)
-               //     CharactersImport += (char)i;
+                //  for (int i = 32; i < 255; i++)
+                //     CharactersImport += (char)i;
                 //Thai
                 for (int i = 0x0E00; i < 0x0E7F; i++)
                     CharactersImport += (char)i;

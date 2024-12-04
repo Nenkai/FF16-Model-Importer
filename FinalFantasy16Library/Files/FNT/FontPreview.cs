@@ -1,15 +1,16 @@
-﻿using FF16Tool;
-using FinalFantasy16;
+﻿using FinalFantasy16Library.Files.TEX;
+
 using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.PixelFormats;
 using SixLabors.ImageSharp.Processing;
+
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace FinalFantasyConvertTool
+namespace FinalFantasy16Library.Files.FNT
 {
     public class FontPreview
     {
@@ -17,7 +18,8 @@ namespace FinalFantasyConvertTool
         private TexFile TexFile;
         private Image<Rgba32> FontImage;
 
-        public FontPreview(FontFile font, TexFile texFile) {
+        public FontPreview(FontFile font, TexFile texFile)
+        {
             FontFile = font;
             FontFile.Save("saved.fnt");
 
@@ -69,14 +71,14 @@ namespace FinalFantasyConvertTool
                    (int)glyph.BitmapWidth,
                    (int)glyph.BitmapHeight)));
 
-                var ofsY = fontImage.Height + (int)(Math.Ceiling(glyph.OffsetY)) - 30;
-                var ofsX = (int)(Math.Ceiling(glyph.OffsetX));
+                var ofsY = fontImage.Height + (int)Math.Ceiling(glyph.OffsetY) - 30;
+                var ofsX = (int)Math.Ceiling(glyph.OffsetX);
 
                 fontImage.Mutate(f => f.DrawImage(clone, new Point(
-                    x + (int)ofsX, 
-                    y + (int)ofsY), 1f));
+                    x + ofsX,
+                    y + ofsY), 1f));
 
-                x += (int)(glyph.CharacterWidth);
+                x += (int)glyph.CharacterWidth;
             }
             fontImage.SaveAsPng("preview.png");
         }

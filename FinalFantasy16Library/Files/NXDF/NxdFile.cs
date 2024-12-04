@@ -10,14 +10,17 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Xml.Linq;
 using System.Xml.Serialization;
+
 using AvaloniaToolbox.Core.IO;
 using AvaloniaToolbox.Core.Textures;
-using FinalFantasyConvertTool.NXDF;
-using Microsoft.Toolkit.HighPerformance.Extensions;
-using Syroot.BinaryData;
-using static FinalFantasyConvertTool.NXDF.LayoutInfo;
 
-namespace CafeLibrary
+using Microsoft.Toolkit.HighPerformance.Extensions;
+
+using Syroot.BinaryData;
+
+using static FinalFantasy16Library.Files.NXDF.LayoutInfo;
+
+namespace FinalFantasy16Library.Files.NXDF
 {
     public class NxdFile
     {
@@ -137,7 +140,7 @@ namespace CafeLibrary
                 NxdHeader = reader.ReadStruct<Header>();
 
                 foreach (var col in Layout.Columns)
-                Console.WriteLine($"{name} {col.Type}");
+                    Console.WriteLine($"{name} {col.Type}");
 
                 switch (NxdHeader.CategoryType)
                 {
@@ -183,7 +186,7 @@ namespace CafeLibrary
                                         var ofsv = reader.ReadUInt32() + start;
                                         string_types[j] = stringTable.ContainsKey(ofsv); //check if string offset
 
-                                        Layout.Columns.Add(new LayoutInfo.Column()
+                                        Layout.Columns.Add(new Column()
                                         {
                                             Type = stringTable.ContainsKey(ofsv) ? "string" : "int"
                                         });
@@ -192,11 +195,11 @@ namespace CafeLibrary
                                 reader.SeekBegin(rows[i].RowDataOffset);
                                 rows[i].Values = ParseRow(reader, size, stringTable, Layout);
                             }
-                            this.Rows.AddRange(rows);
+                            Rows.AddRange(rows);
                         }
 
 
-                        foreach (var row in this.Rows)
+                        foreach (var row in Rows)
                         {
                             List<LocalizedString> values = new List<LocalizedString>();
                             for (int i = 0; i < row.Values.Count; i++)
@@ -214,9 +217,10 @@ namespace CafeLibrary
                             }
 
                             if (values.Count > 0)
-                                Localize.Add(new LocalizedContent() { 
+                                Localize.Add(new LocalizedContent()
+                                {
                                     Strings = values,
-                                    Row = this.Rows.IndexOf(row),
+                                    Row = Rows.IndexOf(row),
                                 });
                         }
                         break;
@@ -263,13 +267,13 @@ namespace CafeLibrary
                                 }
                                 rowSets[i].Rows.AddRange(rows);
                             }
-                            this.RowSets.AddRange(rowSets);
+                            RowSets.AddRange(rowSets);
 
                             var row_list = RowSets.SelectMany(x => x.Rows).ToList();
 
-                            var size = RowSets[1].Rows[0].RowDataOffset - this.RowSets[0].Rows.LastOrDefault().RowDataOffset;
-                            if (this.Layout != null)
-                                size = this.Layout.Columns.Count * 4;
+                            var size = RowSets[1].Rows[0].RowDataOffset - RowSets[0].Rows.LastOrDefault().RowDataOffset;
+                            if (Layout != null)
+                                size = Layout.Columns.Count * 4;
 
                             //calculate string table pos
                             var ofs = rowInfoOffset + maxRowCount * 12;
@@ -295,7 +299,7 @@ namespace CafeLibrary
                                             long start = reader.Position;
                                             var ofsv = reader.ReadUInt32() + start;
 
-                                            Layout.Columns.Add(new LayoutInfo.Column()
+                                            Layout.Columns.Add(new Column()
                                             {
                                                 Type = stringTable.ContainsKey(ofsv) ? "string" : "int",
                                                 RelativeOffset = true,
@@ -303,7 +307,7 @@ namespace CafeLibrary
                                         }
                                     }
                                     reader.SeekBegin(set.Rows[i].RowDataOffset);
-                                    set.Rows[i].Values = ParseRow(reader, (int)size, stringTable, Layout);
+                                    set.Rows[i].Values = ParseRow(reader, size, stringTable, Layout);
                                 }
                             }
                         }
@@ -433,10 +437,10 @@ namespace CafeLibrary
             StringBuilder sb = new StringBuilder();
             using (var wr = new StringWriter(sb))
             {
-                foreach (var row in this.Rows)
+                foreach (var row in Rows)
                 {
                     var cols = row.Values.Select(x => x.Value).ToArray();
-                    if (cols.Length != this.Rows[0].Values.Count)
+                    if (cols.Length != Rows[0].Values.Count)
                         throw new Exception();
 
                     wr.WriteLine(string.Join("|", cols));
@@ -448,7 +452,8 @@ namespace CafeLibrary
 
         public void Save(string path)
         {
-            using (var fs = new FileStream(path, FileMode.Create, FileAccess.Write)) {
+            using (var fs = new FileStream(path, FileMode.Create, FileAccess.Write))
+            {
                 Save(fs);
             }
         }
@@ -461,7 +466,7 @@ namespace CafeLibrary
             {
                 //empty string at start
                 stringTable.Add("", 0);
-                foreach (var row in this.Rows)
+                foreach (var row in Rows)
                 {
                     foreach (var col in row.Values)
                     {
@@ -472,7 +477,7 @@ namespace CafeLibrary
                             stringTable.Add((string)col.Value, 0);
                     }
                 }
-                foreach (var row in this.RowSets.SelectMany(x => x.Rows))
+                foreach (var row in RowSets.SelectMany(x => x.Rows))
                 {
                     foreach (var col in row.Values)
                     {
@@ -527,9 +532,9 @@ namespace CafeLibrary
                             rowDataOffset += Rows[i].Values.Count * 4;
                         }
 
-                        var str_offset = Rows.Count * (Rows[0].Values.Count * 4) + writer.Position;
+                        var str_offset = Rows.Count * Rows[0].Values.Count * 4 + writer.Position;
                         for (int i = 0; i < Rows.Count; i++)
-                            WriteRow(writer, Rows[i], this.Layout, str_offset, stringTable);
+                            WriteRow(writer, Rows[i], Layout, str_offset, stringTable);
 
                         writer.Write(stringData);
                         break;
@@ -543,7 +548,7 @@ namespace CafeLibrary
                         var row_sets_size = RowSets.Count * 12;
                         //size of row headers (12 bytes each) + data
                         var row_data_size = RowSets.Sum(x =>
-                          (x.Rows.Count * 12) + x.Rows.Sum(x => x.Values.Count * 4));
+                          x.Rows.Count * 12 + x.Rows.Sum(x => x.Values.Count * 4));
                         //row info section at end
                         var row_info_size = RowSets.Sum(x => x.Rows.Count) * 12;
 
@@ -565,7 +570,7 @@ namespace CafeLibrary
                             writer.Write((uint)(rowOffset - relative)); //offset for later
                             writer.Write(RowSets[i].Rows.Count);
 
-                            rowOffset += (RowSets[i].Rows.Count * 12) + RowSets[i].Rows.Sum(x => x.Values.Count * 4);
+                            rowOffset += RowSets[i].Rows.Count * 12 + RowSets[i].Rows.Sum(x => x.Values.Count * 4);
                         }
                         var str_offset2 = writer.Position + row_data_size + row_info_size;
 
@@ -585,7 +590,7 @@ namespace CafeLibrary
                                 rowDataOffset2 += row.Values.Count * 4;
                             }
                             foreach (var row in RowSets[i].Rows)
-                                WriteRow(writer, row, this.Layout, str_offset2, stringTable);
+                                WriteRow(writer, row, Layout, str_offset2, stringTable);
                         }
 
                         for (int i = 0; i < RowSets.Count; i++)
@@ -614,7 +619,7 @@ namespace CafeLibrary
             long str_offset, Dictionary<string, long> stringTable)
         {
             long col_start = writer.Position;
-            for (int i = 0; i < row.Values.Count; i++) 
+            for (int i = 0; i < row.Values.Count; i++)
             {
                 var col = row.Values[i];
                 long relative_pos = writer.Position;
@@ -648,7 +653,7 @@ namespace CafeLibrary
 
         public string ToXml()
         {
-            using (var writer = new System.IO.StringWriter())
+            using (var writer = new StringWriter())
             {
                 var serializer = new XmlSerializer(typeof(NxdFile));
                 serializer.Serialize(writer, this);
@@ -663,8 +668,8 @@ namespace CafeLibrary
             using (var stringReader = new StringReader(xml))
             {
                 NxdFile ob = (NxdFile)xmlSerializer.Deserialize(stringReader);
-                this.Rows = ob.Rows;
-                this.NxdHeader = ob.NxdHeader;
+                Rows = ob.Rows;
+                NxdHeader = ob.NxdHeader;
             }
         }
     }

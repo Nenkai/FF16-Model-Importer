@@ -251,55 +251,55 @@ public class ModelImporter
         //Buffer 1
         {
             byte offset1 = 0;
-            AddAttribute(MdlVertexSemantic.Position, EncodingFormat.ENCODING_FLOATx3, ref offset1, 0);
+            AddAttribute(MdlVertexSemantic.POSITION, EncodingFormat.FLOATx3, ref offset1, 0);
 
             if (hasTexCoords[0])
             {
                 if (hasTexCoords[1])
-                    AddAttribute(MdlVertexSemantic.TexCoord0, EncodingFormat.ENCODING_FLOATx4, ref offset1, 0);
+                    AddAttribute(MdlVertexSemantic.TEXCOORD_0, EncodingFormat.FLOATx4, ref offset1, 0);
                 else
-                    AddAttribute(MdlVertexSemantic.TexCoord0, EncodingFormat.ENCODING_FLOATx2, ref offset1, 0);
+                    AddAttribute(MdlVertexSemantic.TEXCOORD_0, EncodingFormat.FLOATx2, ref offset1, 0);
             }
 
             if (hasTexCoords[2])
             {
                 if (hasTexCoords[3])
-                    AddAttribute(MdlVertexSemantic.TexCoord1, EncodingFormat.ENCODING_FLOATx4, ref offset1, 0);
+                    AddAttribute(MdlVertexSemantic.TEXCOORD_1, EncodingFormat.FLOATx4, ref offset1, 0);
                 else
-                    AddAttribute(MdlVertexSemantic.TexCoord1, EncodingFormat.ENCODING_FLOATx2, ref offset1, 0);
+                    AddAttribute(MdlVertexSemantic.TEXCOORD_1, EncodingFormat.FLOATx2, ref offset1, 0);
             }
 
             if (hasBoneWeights[0])
-                AddAttribute(MdlVertexSemantic.BoneWeights0, EncodingFormat.ENCODING_UNORM8x4, ref offset1, 0);
+                AddAttribute(MdlVertexSemantic.BLENDWEIGHT_0, EncodingFormat.UNORM8x4, ref offset1, 0);
 
             if (hasBoneWeights[1])
-                AddAttribute(MdlVertexSemantic.BoneWeights1, EncodingFormat.ENCODING_UNORM8x4, ref offset1, 0);
+                AddAttribute(MdlVertexSemantic.BLENDWEIGHT_1, EncodingFormat.UNORM8x4, ref offset1, 0);
 
             if (hasBoneIndices[0])
-                AddAttribute(MdlVertexSemantic.BoneIndices0, EncodingFormat.ENCODING_UINT8x4, ref offset1, 0);
+                AddAttribute(MdlVertexSemantic.BLENDINDICES_0, EncodingFormat.UINT8x4, ref offset1, 0);
 
             if (hasBoneIndices[1])
-                AddAttribute(MdlVertexSemantic.BoneIndices1, EncodingFormat.ENCODING_UINT8x4, ref offset1, 0);
+                AddAttribute(MdlVertexSemantic.BLENDINDICES_1, EncodingFormat.UINT8x4, ref offset1, 0);
         }
 
         //Buffer 2
         {
             byte offset2 = 0;
             if (hasNormal)
-                AddAttribute(MdlVertexSemantic.Normals, EncodingFormat.ENCODING_FLOATx3, ref offset2, 1);
+                AddAttribute(MdlVertexSemantic.TEXCOORD_10_NORMAL, EncodingFormat.FLOATx3, ref offset2, 1);
             if (hasTangent)
-                AddAttribute(MdlVertexSemantic.Tangents, EncodingFormat.ENCODING_HALFFLOATx4, ref offset2, 1);
+                AddAttribute(MdlVertexSemantic.TEXCOORD_11_TANGENT, EncodingFormat.HALFFLOATx4, ref offset2, 1);
             if (hasBinormal)
-                AddAttribute(MdlVertexSemantic.Binormal, EncodingFormat.ENCODING_HALFFLOATx4, ref offset2, 1);
+                AddAttribute(MdlVertexSemantic.TEXCOORD_12_BITANGENT, EncodingFormat.HALFFLOATx4, ref offset2, 1);
             if (hasColors)
-                AddAttribute(MdlVertexSemantic.Color0, EncodingFormat.ENCODING_UNORM8x4, ref offset2, 1);
+                AddAttribute(MdlVertexSemantic.COLOR_0, EncodingFormat.UNORM8x4, ref offset2, 1);
 
             if (hasUnkAttr24)
-                AddAttribute(MdlVertexSemantic.TexCoord13, EncodingFormat.ENCODING_HALFFLOATx4, ref offset2, 1);
+                AddAttribute(MdlVertexSemantic.TEXCOORD_13_UNK, EncodingFormat.HALFFLOATx4, ref offset2, 1);
             if (hasUnkAttr8)
-                AddAttribute(MdlVertexSemantic.Color5, EncodingFormat.ENCODING_UINT8x4, ref offset2, 1);
+                AddAttribute(MdlVertexSemantic.COLOR_5, EncodingFormat.UINT8x4, ref offset2, 1);
             if (hasUnkAttr9)
-                AddAttribute(MdlVertexSemantic.Color6, EncodingFormat.ENCODING_UNORM8x4, ref offset2, 1);
+                AddAttribute(MdlVertexSemantic.COLOR_6, EncodingFormat.UNORM8x4, ref offset2, 1);
         }
 
         return vertexAttributes;

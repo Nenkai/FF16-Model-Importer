@@ -66,9 +66,9 @@ public class ModelExporter
                 var attributeSet = mdlFile.AttributeSets[mesh.FlexVertexInfoID];
                 var attributes = mdlFile.Attributes.GetRange(attributeSet.Idx, attributeSet.Count);
 
-                bool hasAttr8 = attributes.Any(x => x.Type == MdlVertexSemantic.Color5);
-                bool hasAttr9 = attributes.Any(x => x.Type == MdlVertexSemantic.Color6);
-                bool hasAttr24 = attributes.Any(x => x.Type == MdlVertexSemantic.TexCoord13);
+                bool hasAttr8 = attributes.Any(x => x.Type == MdlVertexSemantic.COLOR_5);
+                bool hasAttr9 = attributes.Any(x => x.Type == MdlVertexSemantic.COLOR_5);
+                bool hasAttr24 = attributes.Any(x => x.Type == MdlVertexSemantic.TEXCOORD_13_UNK);
 
                 var vertices = MdlBufferHelper.LoadVertices(mdlFile, mesh, decompressedVbo.Span);
                 var x = vertices.FindIndex(e => e.TexCoord1 is not null);

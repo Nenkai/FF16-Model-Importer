@@ -41,12 +41,12 @@ public class MdlBufferHelper
 
                 switch (attribute.Type)
                 {
-                    case MdlVertexSemantic.Position: vertex.Position = ReadVector3(ref reader, attribute); break;
-                    case MdlVertexSemantic.Normals: vertex.Normal = ReadVector3(ref reader, attribute); break;
-                    case MdlVertexSemantic.Tangents: vertex.Tangent = ReadVector4(ref reader, attribute); break;
-                    case MdlVertexSemantic.Binormal: vertex.Binormal = ReadVector4(ref reader, attribute); break;
-                    case MdlVertexSemantic.TexCoord0:
-                        if (attribute.Format == EncodingFormat.ENCODING_FLOATx4 || attribute.Format == EncodingFormat.ENCODING_HALFFLOATx4)
+                    case MdlVertexSemantic.POSITION: vertex.Position = ReadVector3(ref reader, attribute); break;
+                    case MdlVertexSemantic.TEXCOORD_10_NORMAL: vertex.Normal = ReadVector3(ref reader, attribute); break;
+                    case MdlVertexSemantic.TEXCOORD_11_TANGENT: vertex.Tangent = ReadVector4(ref reader, attribute); break;
+                    case MdlVertexSemantic.TEXCOORD_12_BITANGENT: vertex.Binormal = ReadVector4(ref reader, attribute); break;
+                    case MdlVertexSemantic.TEXCOORD_0:
+                        if (attribute.Format == EncodingFormat.FLOATx4 || attribute.Format == EncodingFormat.HALFFLOATx4)
                         {
                             var vec = ReadVector4(ref reader, attribute);
                             vertex.TexCoord0 = new Vector2(vec.X, vec.Y);
@@ -55,8 +55,8 @@ public class MdlBufferHelper
                         else
                             vertex.TexCoord0 = ReadVector2(ref reader, attribute);
                         break;
-                    case MdlVertexSemantic.TexCoord1:
-                        if (attribute.Format == EncodingFormat.ENCODING_FLOATx4 || attribute.Format == EncodingFormat.ENCODING_HALFFLOATx4)
+                    case MdlVertexSemantic.TEXCOORD_1:
+                        if (attribute.Format == EncodingFormat.FLOATx4 || attribute.Format == EncodingFormat.HALFFLOATx4)
                         {
                             var vec = ReadVector4(ref reader, attribute);
                             vertex.TexCoord2 = new Vector2(vec.X, vec.Y);
@@ -65,17 +65,17 @@ public class MdlBufferHelper
                         else
                             vertex.TexCoord2 = ReadVector2(ref reader, attribute);
                         break;
-                    case MdlVertexSemantic.BoneIndices0: vertex.BoneIndices0 = ReadVector4(ref reader, attribute); break;
-                    case MdlVertexSemantic.BoneWeights0:
+                    case MdlVertexSemantic.BLENDINDICES_0: vertex.BoneIndices0 = ReadVector4(ref reader, attribute); break;
+                    case MdlVertexSemantic.BLENDWEIGHT_0:
                         vertex.BoneWeights0 = ReadVector4(ref reader, attribute);
                         break;
-                    case MdlVertexSemantic.BoneIndices1:
+                    case MdlVertexSemantic.BLENDINDICES_1:
                         vertex.BoneIndices1 = ReadVector4(ref reader, attribute);
                         break;
-                    case MdlVertexSemantic.BoneWeights1: vertex.BoneWeights1 = ReadVector4(ref reader, attribute); break;
-                    case MdlVertexSemantic.Color5: vertex.UnknownAttr8 = ReadVector4(ref reader, attribute); break;
-                    case MdlVertexSemantic.Color6: vertex.UnknownAttr9 = ReadVector4(ref reader, attribute); break;
-                    case MdlVertexSemantic.Color0: vertex.Color = ReadVector4(ref reader, attribute); break;
+                    case MdlVertexSemantic.BLENDWEIGHT_1: vertex.BoneWeights1 = ReadVector4(ref reader, attribute); break;
+                    case MdlVertexSemantic.COLOR_5: vertex.UnknownAttr8 = ReadVector4(ref reader, attribute); break;
+                    case MdlVertexSemantic.COLOR_6: vertex.UnknownAttr9 = ReadVector4(ref reader, attribute); break;
+                    case MdlVertexSemantic.COLOR_0: vertex.Color = ReadVector4(ref reader, attribute); break;
                     default:
                         break;
                 }
@@ -138,45 +138,45 @@ public class MdlBufferHelper
 
                     switch (attribute.Type)
                     {
-                        case MdlVertexSemantic.Position: WriteVector(writer, vertices[v].Position, attribute); break;
-                        case MdlVertexSemantic.Normals: WriteVector(writer, vertices[v].Normal, attribute); break;
-                        case MdlVertexSemantic.Tangents: WriteVector(writer, vertices[v].Tangent, attribute); break;
-                        case MdlVertexSemantic.Binormal: WriteVector(writer, vertices[v].Binormal, attribute); break;
+                        case MdlVertexSemantic.POSITION: WriteVector(writer, vertices[v].Position, attribute); break;
+                        case MdlVertexSemantic.TEXCOORD_10_NORMAL: WriteVector(writer, vertices[v].Normal, attribute); break;
+                        case MdlVertexSemantic.TEXCOORD_11_TANGENT: WriteVector(writer, vertices[v].Tangent, attribute); break;
+                        case MdlVertexSemantic.TEXCOORD_12_BITANGENT: WriteVector(writer, vertices[v].Binormal, attribute); break;
 
-                        case MdlVertexSemantic.TexCoord0:
-                            if (attribute.Format == EncodingFormat.ENCODING_FLOATx4 || attribute.Format == EncodingFormat.ENCODING_HALFFLOATx4)
+                        case MdlVertexSemantic.TEXCOORD_0:
+                            if (attribute.Format == EncodingFormat.FLOATx4 || attribute.Format == EncodingFormat.HALFFLOATx4)
                             {
                                 Vector2? uv1 = vertices[v].TexCoord0;
                                 Vector2? uv2 = vertices[v].TexCoord1;
                                 WriteVector(writer, new Vector4(uv1.Value.X, uv1.Value.Y, uv2.Value.X, uv2.Value.Y), attribute);
                             }
-                            else if (attribute.Format == EncodingFormat.ENCODING_FLOATx2)
+                            else if (attribute.Format == EncodingFormat.FLOATx2)
                                 WriteVector(writer, vertices[v].TexCoord0, attribute);
                             else
                                 throw new NotSupportedException($"MDL: Unsupported TexCoord0 format type {attribute.Format}");
                             break;
 
-                        case MdlVertexSemantic.TexCoord1:
-                            if (attribute.Format == EncodingFormat.ENCODING_FLOATx4 || attribute.Format == EncodingFormat.ENCODING_HALFFLOATx4)
+                        case MdlVertexSemantic.TEXCOORD_1:
+                            if (attribute.Format == EncodingFormat.FLOATx4 || attribute.Format == EncodingFormat.HALFFLOATx4)
                             {
                                 Vector2? uv3 = vertices[v].TexCoord2;
                                 Vector2? uv4 = vertices[v].TexCoord3;
                                 WriteVector(writer, new Vector4(uv3.Value.X, uv3.Value.Y, uv4.Value.X, uv4.Value.Y), attribute);
                             }
-                            else if (attribute.Format == EncodingFormat.ENCODING_FLOATx2)
+                            else if (attribute.Format == EncodingFormat.FLOATx2)
                                 WriteVector(writer, vertices[v].TexCoord2, attribute);
                             else
                                 throw new NotSupportedException($"MDL: Unsupported TexCoord1 format type {attribute.Format}");
                             break;
 
-                        case MdlVertexSemantic.BoneIndices0: WriteVector(writer, vertices[v].BoneIndices0, attribute); break;
-                        case MdlVertexSemantic.BoneWeights0: WriteVector(writer, vertices[v].BoneWeights0, attribute); break;
-                        case MdlVertexSemantic.BoneIndices1: WriteVector(writer, vertices[v].BoneIndices1, attribute); break;
-                        case MdlVertexSemantic.BoneWeights1: WriteVector(writer, vertices[v].BoneWeights1, attribute); break;
-                        case MdlVertexSemantic.Color5: WriteVector(writer, vertices[v].UnknownAttr8, attribute); break;
-                        case MdlVertexSemantic.Color6: WriteVector(writer, vertices[v].UnknownAttr9, attribute); break;
-                        case MdlVertexSemantic.TexCoord13: WriteVector(writer, vertices[v].UnknownAttr24, attribute); break;
-                        case MdlVertexSemantic.Color0: WriteVector(writer, vertices[v].Color, attribute); break;
+                        case MdlVertexSemantic.BLENDINDICES_0: WriteVector(writer, vertices[v].BoneIndices0, attribute); break;
+                        case MdlVertexSemantic.BLENDWEIGHT_0: WriteVector(writer, vertices[v].BoneWeights0, attribute); break;
+                        case MdlVertexSemantic.BLENDINDICES_1: WriteVector(writer, vertices[v].BoneIndices1, attribute); break;
+                        case MdlVertexSemantic.BLENDWEIGHT_1: WriteVector(writer, vertices[v].BoneWeights1, attribute); break;
+                        case MdlVertexSemantic.COLOR_5: WriteVector(writer, vertices[v].UnknownAttr8, attribute); break;
+                        case MdlVertexSemantic.COLOR_6: WriteVector(writer, vertices[v].UnknownAttr9, attribute); break;
+                        case MdlVertexSemantic.TEXCOORD_13_UNK: WriteVector(writer, vertices[v].UnknownAttr24, attribute); break;
+                        case MdlVertexSemantic.COLOR_0: WriteVector(writer, vertices[v].Color, attribute); break;
                         default:
                             throw new Exception($"Attribute {attribute.Type} not supported!");
                     }
@@ -190,13 +190,13 @@ public class MdlBufferHelper
 
     static Vector2 ReadVector2(ref SpanReader reader, MdlFlexVertexAttribute attr)
     {
-        if (attr.Format == EncodingFormat.ENCODING_FLOATx2)
+        if (attr.Format == EncodingFormat.FLOATx2)
         {
             return new Vector2(
                  reader.ReadSingle(),
                  reader.ReadSingle());
         }
-        else if (attr.Format == EncodingFormat.ENCODING_HALFFLOATx2)
+        else if (attr.Format == EncodingFormat.HALFFLOATx2)
         {
             return new Vector2(
                  (float)reader.ReadHalf(),
@@ -208,7 +208,7 @@ public class MdlBufferHelper
 
     static Vector3 ReadVector3(ref SpanReader reader, MdlFlexVertexAttribute attr)
     {
-        if (attr.Format == EncodingFormat.ENCODING_HALFFLOATx4)
+        if (attr.Format == EncodingFormat.HALFFLOATx4)
         {
             var v = new Vector3(
                  (float)reader.ReadHalf(),
@@ -217,7 +217,7 @@ public class MdlBufferHelper
             reader.ReadUInt16();
             return v;
         }
-        else if (attr.Format == EncodingFormat.ENCODING_FLOATx3)
+        else if (attr.Format == EncodingFormat.FLOATx3)
         {
             return new Vector3(
              reader.ReadSingle(),
@@ -230,7 +230,7 @@ public class MdlBufferHelper
 
     static Vector4 ReadVector4(ref SpanReader reader, MdlFlexVertexAttribute attr)
     {
-        if (attr.Format == EncodingFormat.ENCODING_HALFFLOATx4)
+        if (attr.Format == EncodingFormat.HALFFLOATx4)
         {
             var v = new Vector4(
                  (float)reader.ReadHalf(),
@@ -239,15 +239,15 @@ public class MdlBufferHelper
                  (float)reader.ReadHalf());
             return v;
         }
-        else if (attr.Format == EncodingFormat.ENCODING_FLOATx2)
+        else if (attr.Format == EncodingFormat.FLOATx2)
         {
             return new Vector4(reader.ReadSingle(), reader.ReadSingle(), 0, 0);
         }
-        else if (attr.Format == EncodingFormat.ENCODING_HALFFLOATx2)
+        else if (attr.Format == EncodingFormat.HALFFLOATx2)
         {
             return new Vector4((float)reader.ReadHalf(), (float)reader.ReadHalf(), 0, 0);
         }
-        else if (attr.Format == EncodingFormat.ENCODING_FLOATx4)
+        else if (attr.Format == EncodingFormat.FLOATx4)
         {
             return new Vector4(
                  reader.ReadSingle(),
@@ -255,7 +255,7 @@ public class MdlBufferHelper
                  reader.ReadSingle(),
                  reader.ReadSingle());
         }
-        else if (attr.Format == EncodingFormat.ENCODING_UNORM8x4)
+        else if (attr.Format == EncodingFormat.UNORM8x4)
         {
             return new Vector4(
                  (float)reader.ReadByte() / byte.MaxValue,
@@ -263,7 +263,7 @@ public class MdlBufferHelper
                  (float)reader.ReadByte() / byte.MaxValue,
                  (float)reader.ReadByte() / byte.MaxValue);
         }
-        else if (attr.Format == EncodingFormat.ENCODING_UINT8x4)
+        else if (attr.Format == EncodingFormat.UINT8x4)
         {
             return new Vector4(
                 reader.ReadByte(),
@@ -271,7 +271,7 @@ public class MdlBufferHelper
                 reader.ReadByte(),
                 reader.ReadByte());
         }
-        else if (attr.Format == EncodingFormat.ENCODING_UINT16x4)
+        else if (attr.Format == EncodingFormat.UINT16x4)
         {
             return new Vector4(
                 reader.ReadUInt16(),
@@ -291,20 +291,20 @@ public class MdlBufferHelper
     {
         if (value is null)
         {
-            if (attr.Type == MdlVertexSemantic.Normals)
+            if (attr.Type == MdlVertexSemantic.TEXCOORD_10_NORMAL)
                 value = new Vector3(0.5f, 0.5f, 0.5f);
             else
                 value = Vector3.Zero;
         }
 
-        if (attr.Format == EncodingFormat.ENCODING_HALFFLOATx4)
+        if (attr.Format == EncodingFormat.HALFFLOATx4)
         {
             writer.Write((Half)value.Value.X);
             writer.Write((Half)value.Value.Y);
             writer.Write((Half)value.Value.Z);
             writer.Write((ushort)0);
         }
-        else if (attr.Format == EncodingFormat.ENCODING_FLOATx3)
+        else if (attr.Format == EncodingFormat.FLOATx3)
         {
             writer.Write(value.Value.X);
             writer.Write(value.Value.Y);
@@ -318,44 +318,44 @@ public class MdlBufferHelper
     {
         if (value is null)
         {
-            if (attr.Type == MdlVertexSemantic.Color0)
+            if (attr.Type == MdlVertexSemantic.COLOR_0)
                 value = Vector4.One;
             else
                 value = Vector4.Zero;
         }
 
-        if (attr.Format == EncodingFormat.ENCODING_HALFFLOATx4)
+        if (attr.Format == EncodingFormat.HALFFLOATx4)
         {
             writer.Write((Half)value.Value.X);
             writer.Write((Half)value.Value.Y);
             writer.Write((Half)value.Value.Z);
             writer.Write((Half)value.Value.W);
         }
-        else if (attr.Format == EncodingFormat.ENCODING_FLOATx2)
+        else if (attr.Format == EncodingFormat.FLOATx2)
         {
             writer.Write(value.Value.X);
             writer.Write(value.Value.Y);
         }
-        else if (attr.Format == EncodingFormat.ENCODING_HALFFLOATx2)
+        else if (attr.Format == EncodingFormat.HALFFLOATx2)
         {
             writer.Write((Half)value.Value.X);
             writer.Write((Half)value.Value.Y);
         }
-        else if (attr.Format == EncodingFormat.ENCODING_FLOATx4)
+        else if (attr.Format == EncodingFormat.FLOATx4)
         {
             writer.Write(value.Value.X);
             writer.Write(value.Value.Y);
             writer.Write(value.Value.Z);
             writer.Write(value.Value.W);
         }
-        else if (attr.Format == EncodingFormat.ENCODING_UNORM8x4)
+        else if (attr.Format == EncodingFormat.UNORM8x4)
         {
             writer.Write((byte)(value.Value.X * byte.MaxValue));
             writer.Write((byte)(value.Value.Y * byte.MaxValue));
             writer.Write((byte)(value.Value.Z * byte.MaxValue));
             writer.Write((byte)(value.Value.W * byte.MaxValue));
         }
-        else if (attr.Format == EncodingFormat.ENCODING_UINT8x4)
+        else if (attr.Format == EncodingFormat.UINT8x4)
         {
             writer.Write((byte)value.Value.X);
             writer.Write((byte)value.Value.Y);
@@ -371,12 +371,12 @@ public class MdlBufferHelper
         if (value is null)
             value = Vector2.Zero;
 
-        if (attr.Format == EncodingFormat.ENCODING_FLOATx2)
+        if (attr.Format == EncodingFormat.FLOATx2)
         {
             writer.Write(value.Value.X);
             writer.Write(value.Value.Y);
         }
-        else if (attr.Format == EncodingFormat.ENCODING_HALFFLOATx2)
+        else if (attr.Format == EncodingFormat.HALFFLOATx2)
         {
             writer.Write((Half)value.Value.X);
             writer.Write((Half)value.Value.Y);

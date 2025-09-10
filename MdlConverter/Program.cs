@@ -1,4 +1,5 @@
-﻿using FinalFantasy16Library.Files.MDL;
+﻿using FinalFantasy16Library.Files.ANMB;
+using FinalFantasy16Library.Files.MDL;
 using FinalFantasy16Library.Files.MDL.Convert;
 using FinalFantasy16Library.Files.MTL;
 using FinalFantasy16Library.Files.PAC;
@@ -61,6 +62,16 @@ public class Program
                     string name = Path.GetFileName(f);
                     pzdFile.Save(f.Replace(".xml", ""));
                 }
+            }
+
+            if (arg.EndsWith(".glb") || arg.EndsWith(".gltf"))
+            {
+                ImportAnimFromGLTF(args);
+            }
+
+            if (arg.EndsWith(".anmb"))
+            {
+                GetAnimStats(arg);
             }
         }
     }
@@ -202,5 +213,29 @@ public class Program
         {
             tex.Export(arg + ".png");
         }
+    }
+
+    private static void ImportAnimFromGLTF(string[] args) 
+    { 
+        if (args[0].EndsWith(".glb") || args[0].EndsWith(".gltf")) 
+        {
+            if (args[1].EndsWith(".skl"))
+            {
+                SklFile skel = SklFile.Open(File.OpenRead(args[1]));
+                var importer = new AnimationUtils();
+                importer.Import(skel, args[0]);
+            }
+            else
+            {
+                Console.WriteLine($"ERROR: Havok skeleton file missing.");
+            }
+        }
+    }
+
+    private static void GetAnimStats(string arg)
+    {
+        AnmbFile anim = AnmbFile.Open(File.OpenRead(arg));
+        var logger = new AnimationUtils();
+        logger.GetStats(anim);
     }
 }

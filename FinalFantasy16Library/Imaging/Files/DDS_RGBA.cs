@@ -1,7 +1,4 @@
 ﻿using AvaloniaToolbox.Core.Textures;
-using System;
-using System.Collections.Generic;
-using System.Text;
 
 namespace Toolbox.Core
 {

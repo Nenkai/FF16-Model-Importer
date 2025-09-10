@@ -8,11 +8,6 @@ using FinalFantasy16Library.Files.TEX;
 
 using Newtonsoft.Json;
 
-using SixLabors.ImageSharp;
-using SixLabors.ImageSharp.PixelFormats;
-
-using System.Xml.Linq;
-
 namespace MdlConverter;
 
 public class Program
@@ -100,7 +95,7 @@ public class Program
         string dir = Path.GetDirectoryName(fullPath);
         string modelFileName = Path.GetFileNameWithoutExtension(arg);
 
-        List<SkelFile> skeletons = [];
+        List<SklFile> skeletons = [];
 
         var pacFile = args.FirstOrDefault(x => x.EndsWith(".pac"));
         if (!string.IsNullOrEmpty(pacFile))
@@ -111,7 +106,7 @@ public class Program
             //Multiple skeletons
             foreach (var file in pac.Files.Where(x => x.FileName.EndsWith(".skl")).OrderByDescending(g => g.FileName.Contains("body.skl")))
             {
-                SkelFile skel = SkelFile.Open(file.Data);
+                SklFile skel = SklFile.Open(file.Data);
                 skeletons.Add(skel);
             }
         }

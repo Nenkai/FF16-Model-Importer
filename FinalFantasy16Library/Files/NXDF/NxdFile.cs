@@ -1,22 +1,8 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Diagnostics;
-using System.IO;
-using System.Linq;
-using System.Net.Http.Headers;
-using System.Reflection.PortableExecutable;
-using System.Runtime.InteropServices;
+﻿using System.Runtime.InteropServices;
 using System.Text;
-using System.Threading.Tasks;
-using System.Xml.Linq;
 using System.Xml.Serialization;
 
 using AvaloniaToolbox.Core.IO;
-using AvaloniaToolbox.Core.Textures;
-
-using Microsoft.Toolkit.HighPerformance.Extensions;
-
-using Syroot.BinaryData;
 
 using static FinalFantasy16Library.Files.NXDF.LayoutInfo;
 

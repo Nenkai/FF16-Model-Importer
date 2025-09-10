@@ -1,18 +1,8 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Reflection.PortableExecutable;
-using System.Runtime.InteropServices;
-using System.Text;
-using System.Threading.Tasks;
-using System.Xml.Linq;
-using System.Xml.Serialization;
+﻿using System.Runtime.InteropServices;
 
 using AvaloniaToolbox.Core;
 using AvaloniaToolbox.Core.IO;
 using AvaloniaToolbox.Core.Textures;
-
-using BCnEncoder.Shared;
 
 using CommunityToolkit.HighPerformance.Buffers;
 
@@ -20,12 +10,7 @@ using FinalFantasy16Library.Files.Shared;
 using FinalFantasy16Library.Utils;
 
 using SixLabors.ImageSharp;
-using SixLabors.ImageSharp.ColorSpaces;
 using SixLabors.ImageSharp.PixelFormats;
-using SixLabors.ImageSharp.Processing;
-
-using Vortice.DirectStorage;
-using Vortice.DXGI;
 
 namespace FinalFantasy16Library.Files.TEX
 {

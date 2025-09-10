@@ -10,15 +10,6 @@ using SixLabors.ImageSharp.Processing;
 
 using SkiaSharp;
 
-using Syroot.BinaryData;
-
-using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
 namespace FinalFantasy16Library.Files.FNT
 {
     public class FontGenerator

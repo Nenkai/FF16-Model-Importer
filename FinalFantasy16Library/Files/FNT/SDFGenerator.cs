@@ -1,17 +1,4 @@
-﻿using Microsoft.Toolkit.HighPerformance;
-
-using SixLabors.ImageSharp;
-
-using SkiaSharp;
-
-using Syroot.BinaryData;
-
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Runtime.InteropServices;
-using System.Text;
-using System.Threading.Tasks;
+﻿using SkiaSharp;
 
 using static FinalFantasy16Library.Files.FNT.FontGenerator;
 

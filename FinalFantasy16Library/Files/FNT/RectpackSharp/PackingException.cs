@@ -1,6 +1,4 @@
-﻿using System;
-
-namespace RectpackSharp
+﻿namespace RectpackSharp
 {
     public class PackingException : Exception
     {

@@ -24,8 +24,9 @@ Commands:
 - Import from GLTF to ANMB: `MdlConverter.exe animation.glb body_base.skl` (Imports an animation, converting it from GLB/GLTF to Havok format. Requires the original skeleton file of the animation's target as a parameter)
 
 To properly import to MDL, your GLTF model must point to only materials that are used by the "base" MDL file. You can look up the materials using a hex editor. 
-Example: One of the materials that Clive's `chara/c1001/model/body/b0001/body.mdl` model uses is named `m_c1001b0001_body_a.mtl`. To assign that file to your mesh, create a material named `m_body_a` and make sure to include materials when generating your GLTF file. 
+Example: One of the materials that Clive's `chara/c1001/model/body/b0001/body.mdl` model uses is named `m_c1001b0001_body_a.mtl`. To assign that file to your mesh, create a material named `m_body_a` and make sure to include materials when generating your GLTF file.
 
+To properly import to ANMB, it is recommended to use Quaternion-based rotations in your animations.
 
 ## Contributors and donation links
 

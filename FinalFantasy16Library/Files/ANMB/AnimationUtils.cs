@@ -23,6 +23,7 @@ public class AnimationUtils
         progress?.SetProgress(10, "Loading animation file");
 
         var scene = IOManager.LoadScene(path, new ImportSettings());
+
         var animation = scene.Animations[0];
         var sourceSkeleton = scene.Models[0].Skeleton;
         var targetSkeleton = sklFile.m_Skeleton;
@@ -35,7 +36,7 @@ public class AnimationUtils
         progress?.SetProgress(30, "Binding bones");
 
         // Bone binding between skeletons
-        SortedDictionary<int, int> boundMap = new();
+        SortedDictionary<int, int> boundMap = [];
         for (int track = 0; track < numTargetTracks; ++track)
         {
             string boneName = targetSkeleton.m_bones[track].m_name;
@@ -57,6 +58,7 @@ public class AnimationUtils
 
         progress?.SetProgress(50, "Setting up ANMB");
 
+        // Pre-allocate empty transforms to set "m_transforms" correctly
         int totalTransforms = validTrackCount * frameCount;
         var transforms = new hkQsTransform[totalTransforms];
         for (int i = 0; i < totalTransforms; i++)
@@ -64,6 +66,7 @@ public class AnimationUtils
             transforms[i] = new hkQsTransform();
         }
 
+        // Set new animation and binding base values
         hkaInterleavedUncompressedAnimation newAnimation = new()
         {
             m_duration = duration,
@@ -84,22 +87,23 @@ public class AnimationUtils
 
         progress?.SetProgress(70, "Converting animation");
 
-        int currentTrack = 0;
+        int trackIndex = 0;
 
+        // Iterate over bound bones
         foreach (var trackInfo in boundMap)
         {
-            newBinding.m_transformTrackToBoneIndices[currentTrack] = (short)trackInfo.Key;
+            newBinding.m_transformTrackToBoneIndices[trackIndex] = (short)trackInfo.Key;
             IOBone sourceBone = sourceSkeleton.GetBoneByIndex(trackInfo.Value);
             IOAnimation? group = animation.Groups.FirstOrDefault(g => g.Name == sourceBone.Name);
 
             if (group != null)
             {
-                // Ref pose (target skeleton) as fallback
+                // Set reference pose (target skeleton) as fallback
                 Vector4 translation = targetSkeleton.m_referencePose[trackInfo.Key].m_translation;
                 Quaternion rotation = targetSkeleton.m_referencePose[trackInfo.Key].m_rotation;
                 Vector4 scale = targetSkeleton.m_referencePose[trackInfo.Key].m_scale;
 
-                // Getting transform for current bone at each frame
+                // Getting transform components for each track channel at every frame
                 for (int frame = 0; frame < frameCount; ++frame)
                 {
                     translation = new(
@@ -123,13 +127,13 @@ public class AnimationUtils
                         1
                     );
 
-                    newAnimation.m_transforms[frame * validTrackCount + currentTrack].m_translation = CleanTransform(translation);
-                    newAnimation.m_transforms[frame * validTrackCount + currentTrack].m_rotation = CleanTransform(rotation);
-                    newAnimation.m_transforms[frame * validTrackCount + currentTrack].m_scale = CleanTransform(scale);
+                    newAnimation.m_transforms[frame * validTrackCount + trackIndex].m_translation = translation;
+                    newAnimation.m_transforms[frame * validTrackCount + trackIndex].m_rotation = rotation;
+                    newAnimation.m_transforms[frame * validTrackCount + trackIndex].m_scale = scale;
                 }
             }
 
-            currentTrack++;
+            trackIndex++;
         }
 
         Console.WriteLine($"Transfered transform values from {boundMap.Count} bones across {frameCount - 1} frames.");
@@ -154,19 +158,14 @@ public class AnimationUtils
         // Serialization
         HavokBinarySerializer _serializer = new();
 
-        if (path.EndsWith(".glb"))
-        {
-            path = path.Replace(".glb", ".anmb");
-        }
-        else
-        {
-            path = path.Replace(".gltf", ".anmb");
-        }
+        path = Path.ChangeExtension(path, ".anmb");
 
-        using (FileStream fs = new FileStream(path, FileMode.Create, FileAccess.Write))
+        using (FileStream fs = new(path, FileMode.Create, FileAccess.Write))
         {
             _serializer.Write(root, fs);
         }
+
+        Console.WriteLine("Animation converted successfully!");
     }
 
     /// <summary>
@@ -192,67 +191,5 @@ public class AnimationUtils
         Console.WriteLine($"Number of transform tracks: {anim.m_Animation.m_numberOfTransformTracks}");
         Console.WriteLine($"Number of float tracks: {anim.m_Animation.m_numberOfFloatTracks}");
         Console.WriteLine($"Number of annotation tracks: {anim.m_Animation.m_annotationTracks.Count}");
-    }
-
-    // Clean-up function for Vector4-based transform tracks
-    private static Vector4 CleanTransform(Vector4 transform)
-    {
-        Vector4 newTransform = new();
-
-        for (int i = 0; i < 4; i++)
-        {
-            float value = transform[i];
-
-            if (value > 0.999 && value < 1)
-            {
-                newTransform[i] = 1;
-            }
-            else if (value > -0.001 && value < 0)
-            {
-                newTransform[i] = 0;
-            }
-            else if (value < 0.001 && value > 0)
-            {
-                newTransform[i] = 0;
-            }
-            else
-            {
-                newTransform[i] = value;
-            }
-        }
-
-        return newTransform;
-    }
-
-    // Clean-up function for Quaternion-based transform tracks
-    private static Quaternion CleanTransform(Quaternion transform)
-    {
-        Quaternion newTransform = new();
-
-        for (int i = 0; i < 4; i++)
-        {
-            float value = transform[i];
-
-            if (value > 0.999 && value < 1)
-            {
-                newTransform[i] = 1;
-            }
-            else if (value > -0.001 && value < 0)
-            {
-                newTransform[i] = 0;
-            }
-            else if (value < 0.001 && value > 0)
-            {
-                newTransform[i] = 0;
-            }
-            else
-            {
-                newTransform[i] = value;
-            }
-        }
-
-        newTransform = Quaternion.Normalize(newTransform);
-
-        return newTransform;
     }
 }

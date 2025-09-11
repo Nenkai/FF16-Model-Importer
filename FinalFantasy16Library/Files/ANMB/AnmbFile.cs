@@ -7,7 +7,6 @@ public class AnmbFile
 {   
     public hkaAnimation m_Animation;
     public hkaAnimationBinding m_Binding;
-    public hkaSkeleton? m_Skeleton;
 
     private AnmbFile() { }
 
@@ -25,8 +24,7 @@ public class AnmbFile
         return new AnmbFile()
         {
             m_Animation = container.m_animations[0],
-            m_Binding = container.m_bindings[0],
-            m_Skeleton = container.m_skeletons.Count > 0 ? container.m_skeletons[0] : null
+            m_Binding = container.m_bindings[0]
         };
     }
 }

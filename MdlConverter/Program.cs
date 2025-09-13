@@ -1,4 +1,5 @@
-﻿using FinalFantasy16Library.Files.MDL;
+﻿using FinalFantasy16Library.Files.ANMB;
+using FinalFantasy16Library.Files.MDL;
 using FinalFantasy16Library.Files.MDL.Convert;
 using FinalFantasy16Library.Files.MTL;
 using FinalFantasy16Library.Files.PAC;
@@ -7,11 +8,6 @@ using FinalFantasy16Library.Files.SKL;
 using FinalFantasy16Library.Files.TEX;
 
 using Newtonsoft.Json;
-
-using SixLabors.ImageSharp;
-using SixLabors.ImageSharp.PixelFormats;
-
-using System.Xml.Linq;
 
 namespace MdlConverter;
 
@@ -67,6 +63,16 @@ public class Program
                     pzdFile.Save(f.Replace(".xml", ""));
                 }
             }
+
+            if (arg.EndsWith(".glb") || arg.EndsWith(".gltf"))
+            {
+                ImportAnimFromGLTF(args);
+            }
+
+            if (arg.EndsWith(".anmb"))
+            {
+                GetAnimStats(arg);
+            }
         }
     }
 
@@ -100,7 +106,7 @@ public class Program
         string dir = Path.GetDirectoryName(fullPath);
         string modelFileName = Path.GetFileNameWithoutExtension(arg);
 
-        List<SkelFile> skeletons = [];
+        List<SklFile> skeletons = [];
 
         var pacFile = args.FirstOrDefault(x => x.EndsWith(".pac"));
         if (!string.IsNullOrEmpty(pacFile))
@@ -111,7 +117,7 @@ public class Program
             //Multiple skeletons
             foreach (var file in pac.Files.Where(x => x.FileName.EndsWith(".skl")).OrderByDescending(g => g.FileName.Contains("body.skl")))
             {
-                SkelFile skel = SkelFile.Open(file.Data);
+                SklFile skel = SklFile.Open(file.Data);
                 skeletons.Add(skel);
             }
         }
@@ -207,5 +213,29 @@ public class Program
         {
             tex.Export(arg + ".png");
         }
+    }
+
+    private static void ImportAnimFromGLTF(string[] args) 
+    { 
+        if (args[0].EndsWith(".glb") || args[0].EndsWith(".gltf")) 
+        {
+            if (args[1].EndsWith(".skl"))
+            {
+                SklFile skel = SklFile.Open(File.OpenRead(args[1]));
+                var importer = new AnimationUtils();
+                importer.Import(skel, args[0]);
+            }
+            else
+            {
+                Console.WriteLine($"ERROR: Havok skeleton file missing.");
+            }
+        }
+    }
+
+    private static void GetAnimStats(string arg)
+    {
+        AnmbFile anim = AnmbFile.Open(File.OpenRead(arg));
+        var logger = new AnimationUtils();
+        logger.GetStats(anim);
     }
 }

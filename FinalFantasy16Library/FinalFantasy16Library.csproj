@@ -1,20 +1,20 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>net8.0</TargetFramework>
+    <TargetFramework>net9.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <AllowUnsafeBlocks>True</AllowUnsafeBlocks>
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="BCnEncoder.Net" Version="2.1.0" />
-    <PackageReference Include="CommunityToolkit.HighPerformance" Version="8.3.2" />
+    <PackageReference Include="BCnEncoder.Net" Version="2.2.1" />
+    <PackageReference Include="CommunityToolkit.HighPerformance" Version="8.4.0" />
     <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
-    <PackageReference Include="SixLabors.ImageSharp" Version="3.1.5" />
-    <PackageReference Include="SkiaSharp" Version="3.0.0-preview.4.1" />
-    <PackageReference Include="Syroot.BinaryData.Memory" Version="6.0.0-alpha.6" />
-    <PackageReference Include="Vortice.DirectStorage" Version="3.6.1-beta" />
+    <PackageReference Include="SixLabors.ImageSharp" Version="3.1.11" />
+    <PackageReference Include="SkiaSharp" Version="3.119.0" />
+    <PackageReference Include="Syroot.BinaryData.Memory" Version="5.2.2" />
+    <PackageReference Include="Vortice.DirectStorage" Version="3.6.2" />
   </ItemGroup>
 
   <ItemGroup>

@@ -1,6 +1,4 @@
-﻿using System;
-
-namespace RectpackSharp
+﻿namespace RectpackSharp
 {
     /// <summary>
     /// Specifies hints that help optimize the rectangle packing algorithm. 

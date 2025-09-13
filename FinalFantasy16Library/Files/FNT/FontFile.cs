@@ -2,19 +2,10 @@
 
 using FinalFantasy16Library.Files.TEX;
 
-using SharpGen.Runtime;
-
 using SixLabors.ImageSharp;
-using SixLabors.ImageSharp.PixelFormats;
 using SixLabors.ImageSharp.Processing;
-
-using System;
-using System.Collections.Generic;
 using System.Diagnostics;
-using System.Linq;
-using System.Runtime.InteropServices;
 using System.Text;
-using System.Threading.Tasks;
 using System.Xml.Serialization;
 
 namespace FinalFantasy16Library.Files.FNT

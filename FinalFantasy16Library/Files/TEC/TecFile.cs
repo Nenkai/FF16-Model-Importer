@@ -1,14 +1,6 @@
 ﻿using AvaloniaToolbox.Core.IO;
-
-using Syroot.BinaryData;
-
-using System;
-using System.Collections.Generic;
 using System.Diagnostics;
-using System.Linq;
 using System.Runtime.InteropServices;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace FinalFantasy16Library.Files.TEC
 {

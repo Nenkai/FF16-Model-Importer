@@ -1,15 +1,5 @@
-﻿using BCnEncoder.Encoder;
-using BCnEncoder.Shared.ImageFiles;
-using SixLabors.ImageSharp.ColorSpaces;
-using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
-using System.Net;
-using System.Reflection.PortableExecutable;
-using System.Runtime.InteropServices;
+﻿using System.Runtime.InteropServices;
 using System.Text;
-using System.Threading.Tasks;
 using Toolbox.Core;
 
 namespace AvaloniaToolbox.Core.Textures

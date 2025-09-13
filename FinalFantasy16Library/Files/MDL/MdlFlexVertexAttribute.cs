@@ -1,10 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace FinalFantasy16Library.Files.MDL;
+﻿namespace FinalFantasy16Library.Files.MDL;
 
 public struct MdlFlexVertexAttribute
 {

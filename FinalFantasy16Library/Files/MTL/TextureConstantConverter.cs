@@ -1,10 +1,5 @@
 ﻿using Newtonsoft.Json.Linq;
 using Newtonsoft.Json;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using static FinalFantasy16Library.Files.MTL.MtlFile;
 
 namespace FinalFantasy16Library.Files.MTL;

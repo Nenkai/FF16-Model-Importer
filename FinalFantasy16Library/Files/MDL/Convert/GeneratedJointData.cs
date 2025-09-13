@@ -1,6 +1,4 @@
-﻿using System.Numerics;
-
-namespace FinalFantasy16Library.Files.MDL.Convert;
+﻿namespace FinalFantasy16Library.Files.MDL.Convert;
 
 public class GeneratedJointData
 {

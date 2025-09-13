@@ -1,12 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Numerics;
-using System.Text;
-using System.Threading.Tasks;
-using System.Xml.Linq;
-
-using FinalFantasy16Library.Files.MDL;
+﻿using System.Numerics;
 using FinalFantasy16Library.Files.MDL.Helpers;
 using FinalFantasy16Library.Files.SKL;
 using FinalFantasy16Library.Utils;
@@ -15,8 +7,6 @@ using IONET;
 using IONET.Core;
 using IONET.Core.Model;
 using IONET.Core.Skeleton;
-
-using Toolbox.Core;
 
 namespace FinalFantasy16Library.Files.MDL.Convert;
 
@@ -29,7 +19,7 @@ public class ModelExporter
     /// Exports the mdl and skeleton data with a given file path.
     /// Supported output: .dae, .obj, .gltf, .glb
     /// </summary>
-    public static void Export(MdlFile mdlFile, List<SkelFile> skeletons, string path, int lod = 0,
+    public static void Export(MdlFile mdlFile, List<SklFile> skeletons, string path, int lod = 0,
         ProgressTracker progress = null)
     {
         IOModel iomodel = new IOModel();

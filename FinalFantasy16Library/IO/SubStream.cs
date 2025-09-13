@@ -1,7 +1,4 @@
-﻿using System;
-using System.IO;
-
-namespace AvaloniaToolbox.Core.IO
+﻿namespace AvaloniaToolbox.Core.IO
 {
     //From
     //https://github.com/IcySon55/Kuriimu/blob/master/src/Kontract/IO/SubStream.cs

@@ -15,6 +15,28 @@ public class Program
 {
     public static void Main(string[] args)
     {
+        if (args.Length == 0)
+        {
+            Console.WriteLine("FF16-Model-Importer by KillzXGaming, Nenkai, Maybri, CybersoulXIII");
+            Console.WriteLine("Usage:");
+            Console.WriteLine("----------------------------------------");
+            Console.WriteLine("- Extract model to .gltf (pac is needed for skeleton):");
+            Console.WriteLine("     MdlConverter.exe <model_file_path> <pac_file_path> ");
+            Console.WriteLine("- Import model to .mdl (Requires all LODs in the body folder to be named body_LODx with x as a number):");
+            Console.WriteLine("     MdlConverter.exe <model_folder>");
+            Console.WriteLine("- Import GLTF (animation) to ANMB (Havok):");
+            Console.WriteLine("     MdlConverter.exe animation.glb body_base.skl");
+            Console.WriteLine("----------------------------------------");
+            Console.WriteLine("- Export MTL to JSON:");
+            Console.WriteLine("     MdlConverter.exe material.mtl");
+            Console.WriteLine("- Import JSON to MTL (will overwrite if exists):");
+            Console.WriteLine("     MdlConverter.exe material.mtl.json ");
+            Console.WriteLine("----------------------------------------");
+            Console.WriteLine("- Export PZD to XML:");
+            Console.WriteLine("     MdlConverter.exe text.pzd");
+            Console.WriteLine("- Import XML to PZD (will overwrite if exists):");
+            Console.WriteLine("     MdlConverter.exe text.pzd.xml");
+        }
         foreach (string arg in args)
         {
             if (arg.EndsWith(".tex"))

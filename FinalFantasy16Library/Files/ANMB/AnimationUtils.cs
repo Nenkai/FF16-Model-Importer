@@ -21,13 +21,13 @@ public class AnimationUtils
     /// Imports animation data with a given Havok skeleton and a file path.
     /// Supported input (animation source file): .glb, .gltf
     /// </summary>
-    public void Import(SklFile sklFile, string path, ProgressTracker progress = null)
+    public void Import(SklFile sklFile, string path, float frameRate = 30.0f, ProgressTracker progress = null)
     {
         progress?.SetProgress(10, "Loading animation file");
 
         var importSettings = new ImportSettings
         {
-            FrameRate = 30.0f
+            FrameRate = frameRate
         };
         var scene = IOManager.LoadScene(path, importSettings);
 
@@ -37,8 +37,7 @@ public class AnimationUtils
 
         int numTargetTracks = targetSkeleton.m_bones.Count;
         int frameCount = (int)animation.GetFrameCount();
-        // Set as 24 because IONET also does it when importing
-        float duration = (frameCount - 1) / 24.0f;
+        float duration = (frameCount - 1) / frameRate;
 
         progress?.SetProgress(30, "Binding bones");
 
@@ -228,13 +227,9 @@ public class AnimationUtils
 
     /// <summary>
     /// Exports Havok animation(s) to GLTF or DAE format.
+    /// DAE not exposed to user yet since can not make the dae imports work properly for now although there is no problem on export side.
     /// </summary>
-    /// <param name="skeletonPath">Path to the skeleton file (.skl)</param>
-    /// <param name="animationPathOrFolder">Path to a single animation file (.anmb) or folder containing .anmb files</param>
-    /// <param name="outputFolder">Optional output folder. If null, uses current directory</param>
-    /// <param name="exportFormat">Export format (GLTF or DAE)</param>
-    /// <param name="progress">Optional progress tracker</param>
-    public void Export(SklFile sklFile, string animationPathOrFolder, string? outputFolder = null, 
+    public void Export(SklFile sklFile, string animationPath, 
         ExportFormat exportFormat = ExportFormat.GLTF, ProgressTracker? progress = null)
     {
         progress?.SetProgress(5, "Validating skeleton file");
@@ -245,44 +240,24 @@ public class AnimationUtils
             throw new InvalidOperationException("Failed to load skeleton.");
         }
 
-        // Determine if input is a file or folder
-        List<string> animationFiles = new List<string>();
         string? inputBaseFolder = null;
 
-        if (Directory.Exists(animationPathOrFolder))
-        {
-            // Recursive search for .anmb files
-            progress?.SetProgress(15, "Searching for animation files");
-            animationFiles = Directory.GetFiles(animationPathOrFolder, "*.anmb", SearchOption.AllDirectories).ToList();
-            Console.WriteLine($"Found {animationFiles.Count} animation file(s)");
-            inputBaseFolder = animationPathOrFolder;
-        }
-        else if (File.Exists(animationPathOrFolder))
+        if (File.Exists(animationPath))
         {
             // Single file
-            animationFiles.Add(animationPathOrFolder);
-            inputBaseFolder = Path.GetDirectoryName(animationPathOrFolder);
+            inputBaseFolder = Path.GetDirectoryName(animationPath);
         }
         else
         {
-            throw new FileNotFoundException($"Animation path not found: {animationPathOrFolder}");
-        }
-
-        if (animationFiles.Count == 0)
-        {
-            throw new InvalidOperationException("No animation files found.");
+            throw new FileNotFoundException($"Animation path not found: {animationPath}");
         }
 
         Console.WriteLine($"Export format: {exportFormat}");
-        Console.WriteLine($"Output folder: {outputFolder ?? Directory.GetCurrentDirectory()}");
+        Console.WriteLine($"Output folder: {inputBaseFolder}");
 
-        // Process each animation file
-        float progressPerFile = 80.0f / animationFiles.Count;
-        for (int i = 0; i < animationFiles.Count; i++)
-        {
-            progress?.SetProgress(20 + (i * progressPerFile), $"Exporting {Path.GetFileName(animationFiles[i])}");
-            ExportSingleAnimation(animationFiles[i], skeleton, outputFolder, exportFormat, inputBaseFolder);
-        }
+        // Process animation file
+        progress?.SetProgress(20, $"Exporting {Path.GetFileName(animationPath)}");
+        ExportSingleAnimation(animationPath, skeleton, inputBaseFolder, exportFormat, inputBaseFolder);
 
         progress?.SetProgress(100, "Export complete");
         Console.WriteLine("All animations processed successfully.");
@@ -292,16 +267,13 @@ public class AnimationUtils
     /// Exports a single animation file.
     /// </summary>
     private void ExportSingleAnimation(string animationPath, hkaSkeleton skeleton, string? outputFolder, 
-        ExportFormat exportFormat, string? inputBaseFolder = null)
+        ExportFormat exportFormat, string? inputBaseFolder = null, ProgressTracker? progress = null)
     {
-        Console.WriteLine($"Processing: {animationPath}");
-
-        //var serializer = new HavokBinarySerializer();
-        //IEnumerable<IHavokObject> havokObjects = serializer.ReadAllObjects(animationPath);
+        Console.WriteLine($"Loading anmb file: {animationPath}");
+        progress?.SetProgress(30, $"Loading anmb file {Path.GetFileName(animationPath)}");
 
         AnmbFile animFile = AnmbFile.Open(File.OpenRead(animationPath));
 
-        //var animations = havokObjects.OfType<hkaAnimation>().ToList();
         var animation = animFile.m_Animation;
 
         if (animation == null)
@@ -310,8 +282,6 @@ public class AnimationUtils
             return;
         }
 
-        //var animationBindings = havokObjects.OfType<hkaAnimationBinding>().ToList();
-        //var animationBinding = animationBindings.FirstOrDefault();
         var animationBinding = animFile.m_Binding;
 
         if (animationBinding == null)
@@ -320,13 +290,16 @@ public class AnimationUtils
             return;
         }
 
+        progress?.SetProgress(50, $"Decoding animation data from {Path.GetFileName(animationPath)}");
         // Use HavokAnimationDecoder to decode the animation
         var allTracks = HavokAnimationDecoder.DecodeAnimation(animation, skeleton);
 
+        progress?.SetProgress(70, $"Building export scene for {Path.GetFileName(animationPath)}");
         // Get file name without extension for animation name
         string animationName = Path.GetFileNameWithoutExtension(animationPath);
         var scene = BuildAnimationScene(skeleton, animationBinding, allTracks, exportFormat, animationName);
 
+        progress?.SetProgress(90, $"Exporting animation to {exportFormat} format");
         // Generate output path preserving folder structure
         string fileName = Path.GetFileNameWithoutExtension(animationPath);
         string outputDir = outputFolder ?? Directory.GetCurrentDirectory();

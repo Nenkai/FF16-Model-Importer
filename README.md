@@ -8,7 +8,7 @@ A tool to export and import FF16 .mdl file binaries as .gltf
 - MDL exporting and replacing
 - MTL exporting and replacing
 - PZD exporting and replacing
-- ANMB replacing
+- ANMB exporting and replacing
 
 ## Usage
 
@@ -22,6 +22,7 @@ Commands:
 - Export from PZD to XML: `MdlConverter.exe text.pzd`
 - Import from XML to PZD: `MdlConverter.exe text.pzd.xml` (Currently this will overwrite old PZD file, recommended to put working XML in another directory)
 - Import from GLTF to ANMB: `MdlConverter.exe animation.glb body_base.skl` (Imports an animation, converting it from GLB/GLTF to Havok format. Requires the original skeleton file of the animation's target as a parameter)
+- Export from ANMB to GLTF: `MdlConverter.exe animation.anmb body_base.skl` (Exports an animation, converting it from Havok format to GLB/GLTF. Requires the original skeleton file of the animation's target as a parameter)
 
 To properly import to MDL, your GLTF model must point to only materials that are used by the "base" MDL file. You can look up the materials using a hex editor. 
 Example: One of the materials that Clive's `chara/c1001/model/body/b0001/body.mdl` model uses is named `m_c1001b0001_body_a.mtl`. To assign that file to your mesh, create a material named `m_body_a` and make sure to include materials when generating your GLTF file.
@@ -34,4 +35,5 @@ To properly import to ANMB, it is recommended to use Quaternion-based rotations 
 - Nenkai: Code revisions, MDL file research, and pac handling needed to get .skl data and some .tex info  [donate](https://ko-fi.com/nenkai)
 - Joschuka/Dimy and others: Various research and assistance on MDL file binary
 - Maybri: Additional documentation and functionality to handle bones not present in "base" MDL
-- CybersoulXIII: Animation importing 
+- CybersoulXIII: Animation importing
+- Obilang: Animation exporting

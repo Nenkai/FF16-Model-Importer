@@ -26,6 +26,8 @@ public class Program
             Console.WriteLine("     MdlConverter.exe <model_folder>");
             Console.WriteLine("- Import GLTF (animation) to ANMB (Havok):");
             Console.WriteLine("     MdlConverter.exe animation.glb body_base.skl");
+            Console.WriteLine("- Export ANMB (Havok) to GLTF(animation):");
+            Console.WriteLine("     MdlConverter.exe animation.anmb body_base.skl");
             Console.WriteLine("----------------------------------------");
             Console.WriteLine("- Export MTL to JSON:");
             Console.WriteLine("     MdlConverter.exe material.mtl");
@@ -93,7 +95,7 @@ public class Program
 
             if (arg.EndsWith(".anmb"))
             {
-                GetAnimStats(arg);
+                ExportAnimToGLTF(args);
             }
         }
     }
@@ -245,7 +247,14 @@ public class Program
             {
                 SklFile skel = SklFile.Open(File.OpenRead(args[1]));
                 var importer = new AnimationUtils();
-                importer.Import(skel, args[0]);
+                if (args.Length > 2)
+                {
+                    importer.Import(skel, args[0], float.Parse(args[2]));
+                }
+                else
+                {
+                    importer.Import(skel, args[0]);
+                }
             }
             else
             {
@@ -254,10 +263,20 @@ public class Program
         }
     }
 
-    private static void GetAnimStats(string arg)
-    {
-        AnmbFile anim = AnmbFile.Open(File.OpenRead(arg));
-        var logger = new AnimationUtils();
-        logger.GetStats(anim);
+    private static void ExportAnimToGLTF(string[] args) 
+    { 
+        if (args[0].EndsWith(".anmb")) 
+        {
+            if (args[1].EndsWith(".skl"))
+            {
+                SklFile skel = SklFile.Open(File.OpenRead(args[1]));
+                var exporter = new AnimationUtils();
+                exporter.Export(skel, args[0]);
+            }
+            else
+            {
+                Console.WriteLine($"ERROR: Havok skeleton file missing.");
+            }
+        }
     }
 }

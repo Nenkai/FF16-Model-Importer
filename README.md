@@ -29,6 +29,11 @@ Example: One of the materials that Clive's `chara/c1001/model/body/b0001/body.md
 
 To properly import to ANMB, it is recommended to use Quaternion-based rotations in your animations.
 
+> [!CAUTION]
+> Importing face/hair models is currently **non-functional** as per-vertex custom data from mdl is currently being dropped by the converter.
+>
+> TODO: Use GLTF custom attributes to store it.
+
 ## Contributors and donation links
 
 - KillzXGaming: Original author of this tool  [donate](https://ko-fi.com/simplykxg)

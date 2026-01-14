@@ -1,8 +1,10 @@
 ﻿using System.Text;
-using AvaloniaToolbox.Core.IO;
+
+using Syroot.BinaryData;
 
 using FinalFantasy16Library.Files.MDL.Helpers;
 using FinalFantasy16Library.Files.MDL.Convert;
+using FinalFantasy16Library.Utils;
 
 namespace FinalFantasy16Library.Files.MDL;
 
@@ -89,17 +91,27 @@ public class MdlFile
     /// <summary>
     /// A list of muscle joints for muscle calculations.
     /// </summary>
-    public List<MdlJointMuscleEntry> JointMuscles = [];
+    public List<MdlJointMuscleEntry> MuscleJoints = [];
 
     /// <summary>
     /// A list of joint faces with an unknown purpose.
     /// </summary>
-    public List<MdlUnkJointParam> JointFacesEntries = [];
+    public List<MdlUnkJointParam> FaceJoints = [];
 
     /// <summary>
     /// A list of joints that have a joint name and position.
     /// </summary>
     public List<JointEntry> Joints = [];
+
+    /// <summary>
+    /// A list of parts with an unknown purpose.
+    /// </summary>
+    public List<MdlVFXEntry> VFXEntries = [];
+
+    /// <summary>
+    /// A list of parts with an unknown purpose.
+    /// </summary>
+    public List<MdlUnk6Entry> Entries6 = [];
 
     /// <summary>
     /// A list of bounding boxes used to attach to joints for culling.
@@ -118,12 +130,12 @@ public class MdlFile
     /// <summary>
     /// A list of joint face names.
     /// </summary>
-    public List<string> JointFaceNames = [];
+    public List<string> FaceJointNames = [];
 
     /// <summary>
     /// A list of joint muscle names.
     /// </summary>
-    public List<string> JointMuscleNames = [];
+    public List<string> MuscleJointNames = [];
 
     /// <summary>
     /// A list of material names. These always match the amount of material files.
@@ -133,23 +145,20 @@ public class MdlFile
     /// <summary>
     /// A list of parts with an unknown purpose.
     /// </summary>
-    public List<string> Options = [];
+    public List<string> OptionNames = [];
 
     /// <summary>
     /// A list of parts with an unknown purpose.
     /// </summary>
-    public List<string> AdditionalParts = [];
+    public List<string> AdditionalPartsNames = [];
 
-    /// <summary>
-    /// A list of parts with an unknown purpose.
-    /// </summary>
-    public List<string> VFXEntries = [];
+    public List<string> VFXEntriesNames = [];
 
     //Extra section at the end with an unknown purpose
-    private byte[] ExtraSection = [];
+    private byte[] ExtraData7 = [];
 
     //MCEX section used to store embedded data like collision.
-    private byte[] McexSection = [];
+    private byte[] ExternalContentSection = [];
 
     //Extra section at the end with an unknown purpose
     private byte[] ExtraSection2 = [];
@@ -174,7 +183,7 @@ public class MdlFile
 
     public MdlFile(Stream stream)
     {
-        Read(new FileReader(stream));
+        Read(new BinaryStream(stream));
     }
 
     public void Save(string path)
@@ -185,32 +194,32 @@ public class MdlFile
 
     public void Save(Stream stream)
     {
-        Write(new FileWriter(stream));
+        Write(new BinaryStream(stream));
     }
 
     #region Reading
-    private void Read(FileReader reader)
+    private void Read(BinaryStream reader)
     {
-        reader.ReadSignature("MDL ");
-        Version = reader.ReadByte();
+        reader.ReadSignature("MDL "u8);
+        Version = reader.Read1Byte();
 
         if (Version != 28)
             Console.WriteLine($"WARN: Only MDL version 28 is supported. Version: {Version}");
 
-        MainFlags = reader.ReadByte();
+        MainFlags = reader.Read1Byte();
         if (MainFlags != 1)
             Console.WriteLine($"WARN: Model flag 1 is missing.");
 
-        ModelType = reader.ReadByte();
+        ModelType = reader.Read1Byte();
         reader.ReadByte();
 
         uint section1Size = reader.ReadUInt32();
         uint section2Size = reader.ReadUInt32();
         ushort materialNamesCount = reader.ReadUInt16();
         ushort flexVertAttributeCount = reader.ReadUInt16();
-        byte flexVertInfoCount = reader.ReadByte();
-        byte lodCount = reader.ReadByte();
-        UnkFlags_0x16 = reader.ReadByte();
+        byte flexVertInfoCount = reader.Read1Byte();
+        byte lodCount = reader.Read1Byte();
+        UnkFlags_0x16 = reader.Read1Byte();
         reader.ReadByte();
         uint[] vBuffersOffsets = reader.ReadUInt32s(8);
         uint[] idxBuffersOffsets = reader.ReadUInt32s(8);
@@ -232,11 +241,11 @@ public class MdlFile
         long nameTableStart = reader.Position;
         for (int i = 0; i < materialNamesCount; i++)
         {
-            reader.SeekBegin(nameTableStart + (int)namePointers[i].Offset);
-            MaterialFileNames.Add(reader.ReadStringZeroTerminated());
+            reader.Position = nameTableStart + (int)namePointers[i].Offset;
+            MaterialFileNames.Add(reader.ReadString(StringCoding.ZeroTerminated));
         }
 
-        reader.SeekBegin(MainHeaderSize + section1Size);
+        reader.Position = MainHeaderSize + section1Size;
         ReadModelData(reader);
 
         vBuffers = ReadBuffers(reader, vBuffersOffsets, vBuffersSizes);
@@ -244,7 +253,7 @@ public class MdlFile
 
         if (unkBuffer1Size > 0)
         {
-            reader.SeekBegin(MainHeaderSize + unkBuffer1Offset);
+            reader.Position = MainHeaderSize + unkBuffer1Offset;
             UnknownBuffer1 = new ModelBuffer()
             {
                 Data = reader.ReadBytes((int)unkBuffer1Size),
@@ -253,7 +262,7 @@ public class MdlFile
 
         if (unkBuffer2Size > 0)
         {
-            reader.SeekBegin(MainHeaderSize + unkBuffer1Offset2);
+            reader.Position = MainHeaderSize + unkBuffer1Offset2;
             UnknownBuffer2 = new ModelBuffer()
             {
                 Data = reader.ReadBytes((int)unkBuffer2Size),
@@ -261,7 +270,7 @@ public class MdlFile
         }
     }
 
-    private ModelBuffer[] ReadBuffers(FileReader reader, uint[] offsets, uint[] sizes)
+    private ModelBuffer[] ReadBuffers(BinaryStream reader, uint[] offsets, uint[] sizes)
     {
         ModelBuffer[] buffers = new ModelBuffer[sizes.Length];
         for (int i = 0; i < sizes.Length; i++)
@@ -269,7 +278,7 @@ public class MdlFile
             if (sizes[i] == 0)
                 continue;
 
-            reader.SeekBegin(offsets[i] + MainHeaderSize);
+            reader.Position = offsets[i] + MainHeaderSize;
             buffers[i] = new ModelBuffer()
             {
                 Data = reader.ReadBytes((int)sizes[i]),
@@ -278,7 +287,7 @@ public class MdlFile
         return buffers;
     }
 
-    private void ReadModelData(FileReader reader)
+    private void ReadModelData(BinaryStream reader)
     {
         SpecsHeader = reader.ReadStruct<MeshSpecsHeader>();
         LODModels = reader.ReadMultipleStructs<MdlLODModelInfo>(SpecsHeader.LODModelCount);
@@ -287,17 +296,18 @@ public class MdlFile
         Joints = reader.ReadMultipleStructs<JointEntry>(SpecsHeader.JointCount);
         var MaterialNamePointers = reader.ReadMultipleStructs<NamePointer>(SpecsHeader.MaterialCount);
         var JointFaceNamePointers = reader.ReadMultipleStructs<MdlFaceJointEntry>(SpecsHeader.FaceJointCount);
-        JointMuscles = reader.ReadMultipleStructs<MdlJointMuscleEntry>(SpecsHeader.MuscleJointCount);
-        JointFacesEntries = reader.ReadMultipleStructs<MdlUnkJointParam>(SpecsHeader.UnkJointParamCount);
+        MuscleJoints = reader.ReadMultipleStructs<MdlJointMuscleEntry>(SpecsHeader.MuscleJointCount);
+        FaceJoints = reader.ReadMultipleStructs<MdlUnkJointParam>(SpecsHeader.UnkJointParamCount);
         var AdditionalPartNamePointers = reader.ReadMultipleStructs<NamePointer>(SpecsHeader.AdditionalPartCount);
         var OptionNamePointers = reader.ReadMultipleStructs<NamePointer>(SpecsHeader.OptionCount);
-        var VFXEntryNamePointers = reader.ReadMultipleStructs<NamePointer>(SpecsHeader.VFXEntryCount);
+        VFXEntries = reader.ReadMultipleStructs<MdlVFXEntry>(SpecsHeader.VFXEntryCount);
+        Entries6 = reader.ReadMultipleStructs<MdlUnk6Entry>(SpecsHeader.Entries6Count);
 
-        ExtraSection = reader.ReadBytes((int)SpecsHeader.ExtraSectionSize); //40 bytes when used
+        ExtraData7 = reader.ReadBytes((int)SpecsHeader.ExtraSectionSize); //40 bytes when used
         reader.Align(0x04);
 
         long mcexPosition = reader.Position;
-        McexSection = reader.ReadBytes((int)SpecsHeader.ModelExternalContentSize);
+        ExternalContentSection = reader.ReadBytes((int)SpecsHeader.ModelExternalContentSize);
         reader.Position = mcexPosition + (int)AlignValue(SpecsHeader.ModelExternalContentSize, 0x10);
 
         if (SpecsHeader.JointCount > 0)
@@ -316,7 +326,7 @@ public class MdlFile
         {
             reader.Position = strTableOffset + MaterialNamePointers[i].Offset;
 
-            string str = reader.ReadStringZeroTerminated();
+            string str = reader.ReadString(StringCoding.ZeroTerminated);
             if (!str.All(char.IsAscii))
                 throw new Exception($"Material name '{str}' must be a valid ASCII with no special characters.");
 
@@ -327,7 +337,7 @@ public class MdlFile
         {
             reader.Position = strTableOffset + Joints[i].NameOffset;
 
-            string str = reader.ReadStringZeroTerminated();
+            string str = reader.ReadString(StringCoding.ZeroTerminated);
             if (!str.All(char.IsAscii))
                 throw new Exception($"Joint name '{str}' must be a valid ASCII with no special characters.");
 
@@ -338,55 +348,56 @@ public class MdlFile
         {
             reader.Position = strTableOffset + JointFaceNamePointers[i].Offset;
 
-            string str = reader.ReadStringZeroTerminated();
+            string str = reader.ReadString(StringCoding.ZeroTerminated);
             if (!str.All(char.IsAscii))
                 throw new Exception($"Joint face name '{str}' must be a valid ASCII with no special characters.");
 
-            JointFaceNames.Add(str);
+            FaceJointNames.Add(str);
         }
 
         for (int i = 0; i < SpecsHeader.MuscleJointCount; i++)
         {
-            reader.Position = strTableOffset + JointMuscles[i].NameOffset;
+            reader.Position = strTableOffset + MuscleJoints[i].NameOffset;
 
-            string str = reader.ReadStringZeroTerminated();
+            string str = reader.ReadString(StringCoding.ZeroTerminated);
             if (!str.All(char.IsAscii))
                 throw new Exception($"Joint muscle name '{str}' must be a valid ASCII with no special characters.");
 
-            JointMuscleNames.Add(str);
+            MuscleJointNames.Add(str);
         }
 
         for (int i = 0; i < SpecsHeader.AdditionalPartCount; i++)
         {
             reader.Position = strTableOffset + AdditionalPartNamePointers[i].Offset;
 
-            string str = reader.ReadStringZeroTerminated();
+            string str = reader.ReadString(StringCoding.ZeroTerminated);
             if (!str.All(char.IsAscii))
                 throw new Exception($"Additional part '{str}' must be a valid ASCII with no special characters.");
 
-            AdditionalParts.Add(str);
+            AdditionalPartsNames.Add(str);
         }
 
         for (int i = 0; i < SpecsHeader.OptionCount; i++)
         {
             reader.Position = strTableOffset + OptionNamePointers[i].Offset;
 
-            string str = reader.ReadStringZeroTerminated();
+            string str = reader.ReadString(StringCoding.ZeroTerminated);
             if (!str.All(char.IsAscii))
                 throw new Exception($"Option name '{str}' must be a valid ASCII with no special characters.");
 
-            Options.Add(str);
+            OptionNames.Add(str);
         }
 
         for (int i = 0; i < SpecsHeader.VFXEntryCount; i++)
         {
-            reader.Position = strTableOffset + VFXEntryNamePointers[i].Offset;
+            var entry = new MdlVFXEntry();
+            reader.Position = strTableOffset + VFXEntries[i].NameOffset;
 
-            string str = reader.ReadStringZeroTerminated();
+            string str = reader.ReadString(StringCoding.ZeroTerminated);
             if (!str.All(char.IsAscii))
                 throw new Exception($"VFX Entry '{str}' must be a valid ASCII with no special characters.");
 
-            VFXEntries.Add(str);
+            VFXEntriesNames.Add(str);
         }
 
         reader.Position = strTableOffset + SpecsHeader.StringTableSize;
@@ -404,7 +415,7 @@ public class MdlFile
     #region Writing
     private long _ofsMeshInfoSavedPos; //for adjusting buffer offsets
 
-    private void Write(FileWriter writer)
+    private void Write(BinaryStream writer)
     {
         uint[] vBuffersSizes = new uint[8];
         uint[] idxBuffersSizes = new uint[8];
@@ -417,34 +428,34 @@ public class MdlFile
             if (idxBuffers[i] != null)
                 idxBuffersSizes[i] = (uint)idxBuffers[i].Data.Length;
 
-        writer.Write(Encoding.ASCII.GetBytes("MDL "));
-        writer.Write(Version);
-        writer.Write(MainFlags);
-        writer.Write(ModelType);
-        writer.Write((byte)0);
-        writer.Write(0); //mat size later
-        writer.Write(0); //mesh spec size later
-        writer.Write((ushort)MaterialFileNames.Count);
-        writer.Write((ushort)Attributes.Count);
-        writer.Write((byte)AttributeSets.Count);
-        writer.Write((byte)LODModels.Count); //LOD count
-        writer.Write(UnkFlags_0x16);
-        writer.Write((byte)0);
+        writer.Write("MDL "u8);
+        writer.WriteByte(Version);
+        writer.WriteByte(MainFlags);
+        writer.WriteByte(ModelType);
+        writer.WriteByte(0);
+        writer.WriteUInt32(0); //mat size later
+        writer.WriteUInt32(0); //mesh spec size later
+        writer.WriteUInt16((ushort)MaterialFileNames.Count);
+        writer.WriteUInt16((ushort)Attributes.Count);
+        writer.WriteByte((byte)AttributeSets.Count);
+        writer.WriteByte((byte)LODModels.Count); //LOD count
+        writer.WriteByte(UnkFlags_0x16);
+        writer.WriteByte(0);
 
         //vertex buffer offsets
         long ofsVbufferPos = writer.Position;
-        writer.Write(new uint[8]); //vertex buffer offsets saved later
+        writer.WriteUInt32s(new uint[8]); //vertex buffer offsets saved later
         long ofsIbufferPos = writer.Position;
-        writer.Write(new uint[8]); //index buffer offsets saved later
-        writer.Write(vBuffersSizes);
-        writer.Write(idxBuffersSizes);
+        writer.WriteUInt32s(new uint[8]); //index buffer offsets saved later
+        writer.WriteUInt32s(vBuffersSizes);
+        writer.WriteUInt32s(idxBuffersSizes);
 
         long ofsUnknownBuffers = writer.Position;
 
-        writer.Write((uint)0); //unknown buffer 1 offset
-        writer.Write((uint)UnknownBuffer1.Data.Length);
-        writer.Write((uint)0); //unknown buffer 2 offset
-        writer.Write((uint)UnknownBuffer2.Data.Length);
+        writer.WriteUInt32(0); //unknown buffer 1 offset
+        writer.WriteUInt32((uint)UnknownBuffer1.Data.Length);
+        writer.WriteUInt32(0); //unknown buffer 2 offset
+        writer.WriteUInt32((uint)UnknownBuffer2.Data.Length);
 
         long start_section1 = writer.Position;
 
@@ -452,14 +463,26 @@ public class MdlFile
         writer.WriteMultiStruct(Attributes);
         writer.Write(BoundingBox);
 
-        uint nameOfs = 0;
-        WriteNameStructs(writer, MaterialFileNames, ref nameOfs);
-
+        // Write material file name table
+        long matFileNamesTableOffset = writer.Position;
+        var materialFileNamesStrTable = new OptimizedStringTable() { IsRelativeOffsets = true };
+        foreach (var materialFileName in MaterialFileNames)
+            materialFileNamesStrTable.AddString(materialFileName);
+        writer.Position += (0x10 * MaterialFileNames.Count); // Skip for now
         if ((UnkFlags_0x16 & 2) != 0)
             writer.Write(UnknownEntries);
+        materialFileNamesStrTable.SaveStream(writer);
+        writer.Align(0x08);
 
-        writer.WriteStrings(MaterialFileNames);
-        writer.Align(0x10);
+        // String table written, write the structures now
+        long endTableOffset = writer.Position;
+        writer.Position = matFileNamesTableOffset;
+        for (int i = 0; i < MaterialFileNames.Count; i++)
+        {
+            writer.WriteUInt32((uint)materialFileNamesStrTable.GetStringOffset(MaterialFileNames[i]));
+            writer.Position += 0x0C;
+        }
+        writer.Position = endTableOffset;
 
         //size
         writer.WriteSectionSizeU32(8, writer.Position - start_section1);
@@ -499,52 +522,24 @@ public class MdlFile
         writer.Write(UnknownBuffer2.Data.Span);
     }
 
-    private void WriteMeshData(FileWriter writer)
+    private void WriteMeshData(BinaryStream writer)
     {
+        long baseHeaderOffset = writer.Position;
+
         //Prepare spec header
         SpecsHeader.LODModelCount = (ushort)LODModels.Count;
         SpecsHeader.SubmeshCount = (ushort)MeshInfos.Count;
-        SpecsHeader.JointCount = (uint)Joints.Count;
-        SpecsHeader.MuscleJointCount = (ushort)JointMuscles.Count;
-        SpecsHeader.FaceJointCount = (byte)JointFaceNames.Count;
+        SpecsHeader.JointCount = (ushort)Joints.Count;
+        SpecsHeader.MuscleJointCount = (ushort)MuscleJoints.Count;
+        SpecsHeader.FaceJointCount = (byte)FaceJointNames.Count;
         SpecsHeader.DrawPartCount = (ushort)SubDrawCalls.Count;
-        SpecsHeader.UnkJointParamCount = (byte)JointFacesEntries.Count;
+        SpecsHeader.UnkJointParamCount = (byte)FaceJoints.Count;
         SpecsHeader.MaterialCount = (byte)MaterialNames.Count;
         SpecsHeader.FlexVertexCount = (byte)Attributes.Count;
-        SpecsHeader.OptionCount = (byte)Options.Count;
-        SpecsHeader.AdditionalPartCount = (byte)AdditionalParts.Count;
+        SpecsHeader.OptionCount = (byte)OptionNames.Count;
+        SpecsHeader.AdditionalPartCount = (byte)AdditionalPartsNames.Count;
         SpecsHeader.VFXEntryCount = (byte)VFXEntries.Count;
-
-        SpecsHeader.StringTableSize = (uint)MaterialNames.Sum(x => Encoding.ASCII.GetByteCount(x) + 1) +
-                                       (uint)JointNames.Sum(x => Encoding.ASCII.GetByteCount(x) + 1) +
-                                       (uint)JointFaceNames.Sum(x => Encoding.ASCII.GetByteCount(x) + 1) +
-                                       (uint)JointMuscleNames.Sum(x => Encoding.ASCII.GetByteCount(x) + 1) +
-                                       (uint)Options.Sum(x => Encoding.ASCII.GetByteCount(x) + 1) +
-                                       (uint)AdditionalParts.Sum(x => Encoding.ASCII.GetByteCount(x) + 1) +
-                                       (uint)VFXEntries.Sum(x => Encoding.ASCII.GetByteCount(x) + 1);
-
-        uint nameOfs = 0;
-
-        //name offset setup for joints (after material names)
-        uint jointNameOfs = (uint)MaterialNames.Sum(x => x.Length + 1);
-        for (int i = 0; i < Joints.Count; i++)
-        {
-            Joints[i].NameOffset = jointNameOfs;
-            jointNameOfs += (uint)JointNames[i].Length + 1;
-        }
-        //Joint face names
-        ulong[] jointFaceNameOffsets = new ulong[JointFaceNames.Count];
-        for (int i = 0; i < JointFaceNames.Count; i++)
-        {
-            jointFaceNameOffsets[i] = jointNameOfs;
-            jointNameOfs += (uint)JointFaceNames[i].Length + 1;
-        }
-        //Joint muscle names
-        for (int i = 0; i < JointMuscles.Count; i++)
-        {
-            JointMuscles[i].NameOffset = jointNameOfs;
-            jointNameOfs += (uint)JointMuscleNames[i].Length + 1;
-        }
+        SpecsHeader.Entries6Count = (ushort)Entries6.Count;
 
         foreach (MdlLODModelInfo mesh in LODModels)
         {
@@ -558,33 +553,45 @@ public class MdlFile
             mesh.TriCount = (uint)subMeshes.Sum(x => x.FaceIndexCount) / 3;
         }
 
-        writer.WriteStruct(SpecsHeader);
+        var stringTable = new OptimizedStringTable() { IsRelativeOffsets = true };
+        foreach (var str in MaterialNames) // Yes these come before joints despite joints's struct being first
+            stringTable.AddString(str);
+        foreach (var str in JointNames)
+            stringTable.AddString(str);
+        foreach (var str in FaceJointNames)
+            stringTable.AddString(str);
+        foreach (var str in MuscleJointNames)
+            stringTable.AddString(str);
+        foreach (var str in AdditionalPartsNames)
+            stringTable.AddString(str);
+        foreach (var str in OptionNames)
+            stringTable.AddString(str);
+        foreach (var str in VFXEntriesNames)
+            stringTable.AddString(str);
 
+        // At this point we can start writing the contents, except structs that have strings
+        writer.Position = baseHeaderOffset + 0x40; // Skip header for now
         _ofsMeshInfoSavedPos = writer.Position;
         writer.WriteMultiStruct(LODModels);
         writer.WriteMultiStruct(MeshInfos);
         writer.WriteMultiStruct(SubDrawCalls);
-        writer.WriteMultiStruct(Joints);
-        WriteNameStructs(writer, MaterialNames, ref nameOfs);
 
-        writer.Write(jointFaceNameOffsets);
-        writer.WriteMultiStruct(JointMuscles);
-        writer.WriteMultiStruct(JointFacesEntries);
-
-        nameOfs += (uint)JointNames.Sum(x => Encoding.ASCII.GetByteCount(x) + 1);
-        nameOfs += (uint)JointFaceNames.Sum(x => Encoding.ASCII.GetByteCount(x) + 1);
-        nameOfs += (uint)JointMuscleNames.Sum(x => Encoding.ASCII.GetByteCount(x) + 1);
-
-        WriteNameStructs(writer, AdditionalParts, ref nameOfs);
-        WriteNameStructs(writer, Options, ref nameOfs);
-        WriteNameStructs(writer, VFXEntries, ref nameOfs);
-
-        writer.Write(ExtraSection);
+        long jointsOffset = writer.Position;
+        writer.Position += (Joints.Count * 0x10); // Write later
+        writer.Position += (MaterialNames.Count * 0x10); // Write later
+        writer.Position += (FaceJointNames.Count * 0x08); // Write later
+        writer.Position += (MuscleJoints.Count * 0x50); // Write later
+        writer.Position += (FaceJoints.Count * 0x20); // Write later
+        writer.Position += (AdditionalPartsNames.Count * 0x10); // Write later
+        writer.Position += (OptionNames.Count * 0x10); // Write later
+        writer.Position += (VFXEntries.Count * 0x10); // Write later
+        writer.Position += (Entries6.Count * 0x20); // Write later
+        writer.Write(ExtraData7);
         writer.Align(0x04);
 
-        long mcexPosition = writer.Position;
-        writer.Write(McexSection);
-        writer.Position = mcexPosition + (int)AlignValue((uint)McexSection.Length, 0x10);
+        long modelExternalContentOffset = writer.Position;
+        writer.Write(ExternalContentSection);
+        writer.Position = modelExternalContentOffset + (int)AlignValue((uint)ExternalContentSection.Length, 0x10);
 
         if (SpecsHeader.JointCount > 0)
             writer.WriteMultiStruct(JointBoundings);
@@ -596,32 +603,64 @@ public class MdlFile
             writer.Position = basePos + AlignValue(sizeof(float) * 6, 0x10);
         }
 
-        // TODO: String table
-        writer.WriteStrings(MaterialNames);
-        writer.WriteStrings(JointNames);
-        writer.WriteStrings(JointFaceNames);
-        writer.WriteStrings(JointMuscleNames);
-        writer.WriteStrings(AdditionalParts);
-        writer.WriteStrings(Options);
-        writer.WriteStrings(VFXEntries);
-        writer.Align(0x10);
-
+        long stringTableOffset = writer.Position;
+        stringTable.SaveStream(writer);
+        SpecsHeader.StringTableSize = (uint)(writer.Position - stringTableOffset);
+        writer.Align(0x10, grow: true);
         if ((UnkFlags_0x16 & 1) != 0)
         {
             writer.Write(ExtraSection2);
-            writer.Align(0x10);
+            writer.Align(0x10, grow: true);
         }
+        long bottomOffset = writer.Position;
+
+        // Bottom.
+        // Write structures we haven't written yet (mainly because they have strings)
+        writer.Position = jointsOffset;
+        for (int i = 0; i < JointNames.Count; i++)
+            Joints[i].NameOffset = (uint)stringTable.GetStringOffset(JointNames[i]);
+        writer.WriteMultiStruct(Joints);
+
+        for (int i = 0; i < MaterialNames.Count; i++)
+        {
+            writer.WriteUInt32((uint)stringTable.GetStringOffset(MaterialNames[i]));
+            writer.Position += 0x0C;
+        }
+
+        for (int i = 0; i < FaceJointNames.Count; i++)
+        {
+            writer.WriteUInt32((uint)stringTable.GetStringOffset(FaceJointNames[i]));
+            writer.WriteUInt32(0);
+        }
+
+        for (int i = 0; i < MuscleJoints.Count; i++)
+            MuscleJoints[i].NameOffset = (uint)stringTable.GetStringOffset(MuscleJointNames[i]);
+        writer.WriteMultiStruct(MuscleJoints);
+
+        writer.WriteMultiStruct(FaceJoints);
+
+        for (int i = 0; i < AdditionalPartsNames.Count; i++)
+        {
+            writer.WriteUInt32((uint)stringTable.GetStringOffset(AdditionalPartsNames[i]));
+            writer.Position += 0x0C;
+        }
+
+        for (int i = 0; i < OptionNames.Count; i++)
+        {
+            writer.WriteUInt32((uint)stringTable.GetStringOffset(OptionNames[i]));
+            writer.Position += 0x0C;
+        }
+
+        for (int i = 0; i < VFXEntriesNames.Count; i++)
+            VFXEntries[i].NameOffset = (uint)stringTable.GetStringOffset(VFXEntriesNames[i]);
+        writer.WriteMultiStruct(VFXEntries);
+        writer.WriteMultiStruct(Entries6);
+
+        writer.Position = baseHeaderOffset;
+        writer.WriteStruct(SpecsHeader);
+        writer.Position = bottomOffset;
     }
 
-    private void WriteNameStructs(FileWriter writer, List<string> strings, ref uint offsetStart)
-    {
-        foreach (var name in strings)
-        {
-            writer.Write((ulong)offsetStart);
-            writer.Write((ulong)0);
-            offsetStart += (uint)name.Length + 1;
-        }
-    }
     #endregion
 
     public struct NamePointer

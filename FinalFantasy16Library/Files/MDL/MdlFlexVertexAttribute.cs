@@ -40,7 +40,7 @@ public struct MdlFlexVertexAttribute
         }
     }
 
-    public override readonly string ToString() => $"{Type}_{Format}_{Offset}_{BufferIdx}";
+    public override readonly string ToString() => $"{Type}|{Format}|Offset:{Offset:X}|{BufferIdx}";
 }
 
 public enum EncodingFormat : byte
@@ -97,7 +97,7 @@ public enum MdlVertexSemantic : byte
     TEXCOORD_10_NORMAL = 21, // Used by normals
     TEXCOORD_11_TANGENT = 22, // Used by tangent
     TEXCOORD_12_BITANGENT = 23, // Used by bitangents
-    TEXCOORD_13_UNK = 24,
+    TEXCOORD_13 = 24,
     TEXCOORD_14_UNK = 25,
     TEXCOORD_15_UNK = 26,
     DEPTH = 27,

@@ -10,11 +10,10 @@ public class MeshSpecsHeader
     public ushort OptionCount;
     public ushort DrawPartCount;
     public ushort MaterialCount;
-    public uint JointCount;
-
-    public ushort Unknown1;
+    public ushort JointCount;
+    public ushort Count4;
+    public ushort Entries6Count;
     public ushort LODModelCount;
-
     public byte Unknown3a;
     public byte FaceJointCount;
 

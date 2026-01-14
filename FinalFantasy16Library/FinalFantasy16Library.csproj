@@ -1,7 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>net9.0</TargetFramework>
+    <TargetFramework>net10.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <AllowUnsafeBlocks>True</AllowUnsafeBlocks>
@@ -13,6 +13,7 @@
     <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
     <PackageReference Include="SixLabors.ImageSharp" Version="3.1.11" />
     <PackageReference Include="SkiaSharp" Version="3.119.0" />
+    <PackageReference Include="Syroot.BinaryData" Version="5.2.2" />
     <PackageReference Include="Syroot.BinaryData.Memory" Version="5.2.2" />
     <PackageReference Include="Vortice.DirectStorage" Version="3.6.2" />
   </ItemGroup>
@@ -30,9 +31,6 @@
     </Reference>
     <Reference Include="HKLib.Serialization">
       <HintPath>Lib\HKLib.Serialization.dll</HintPath>
-    </Reference>
-    <Reference Include="Syroot.BinaryData">
-      <HintPath>Lib\Syroot.BinaryData.dll</HintPath>
     </Reference>
   </ItemGroup>
 

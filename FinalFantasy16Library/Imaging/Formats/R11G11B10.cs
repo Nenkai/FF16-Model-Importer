@@ -1,6 +1,8 @@
-﻿using System.Numerics;
+﻿using FinalFantasy16Library.Imaging.Interfaces;
 
-namespace AvaloniaToolbox.Core.Textures
+using System.Numerics;
+
+namespace FinalFantasy16Library.Imaging.Formats
 {
     //Based on https://github.com/FlaxEngine/FlaxEngine/blob/49eeb7bf9a3dcb4bcf373fc5281d61ffcfab7b0a/Source/Engine/Core/Math/FloatR11G11B10.cs#L20
     public class R11G11B10 : ImageEncoder

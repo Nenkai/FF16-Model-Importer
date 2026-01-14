@@ -1,7 +1,7 @@
 ﻿using System.Runtime.InteropServices;
 using System.Text;
 
-namespace AvaloniaToolbox.Core.IO
+namespace FinalFantasy16Library.IO
 {
     [StructLayout(LayoutKind.Sequential, Pack = 1)]
     public struct Magic

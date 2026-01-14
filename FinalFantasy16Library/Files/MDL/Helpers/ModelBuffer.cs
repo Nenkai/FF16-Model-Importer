@@ -20,6 +20,8 @@ public class ModelBuffer
 
     public void CompressedData(byte[] decompressedData)
     {
+        File.WriteAllBytes("test_compressed.buf", decompressedData);
+
         if (decompressedData.Length == 0)
             throw new Exception($"Buffer given is empty!");
 

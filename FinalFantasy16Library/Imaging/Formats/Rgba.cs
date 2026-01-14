@@ -1,4 +1,6 @@
-﻿namespace AvaloniaToolbox.Core.Textures
+﻿using FinalFantasy16Library.Imaging.Interfaces;
+
+namespace FinalFantasy16Library.Imaging.Formats
 {
     public class Rgba : ImageEncoder
     {

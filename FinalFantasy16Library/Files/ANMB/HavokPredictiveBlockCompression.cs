@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Runtime.CompilerServices;
 
-namespace HKLib.hk2018;
+namespace FinalFantasy16Library.Files.ANMB;
 
 /// <summary>
 /// Standalone implementation of Havok's predictive block compression for animation data.

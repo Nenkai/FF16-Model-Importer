@@ -2,7 +2,10 @@
 using System.Text;
 using System.Xml.Serialization;
 
-using AvaloniaToolbox.Core.IO;
+using Syroot.BinaryData;
+
+using FinalFantasy16Library.IO;
+using FinalFantasy16Library.Utils;
 
 namespace FinalFantasy16Library.Files.PZDF;
 
@@ -71,10 +74,10 @@ public class PzdFile
 
     private void Read(Stream stream)
     {
-        using (var reader = new FileReader(stream))
+        using (var reader = new BinaryStream(stream))
         {
             PzdHeader = reader.ReadStruct<Header>();
-            reader.SeekBegin(PzdHeader.TextContentOffset);
+            reader.Position = PzdHeader.TextContentOffset;
             for (int i = 0; i < PzdHeader.TextContentCount; i++)
             {
                 var startpos = reader.Position;
@@ -104,7 +107,7 @@ public class PzdFile
                 reader.ReadUInt32(); //0
                 reader.ReadUInt32(); //0
 
-                reader.SeekBegin(pos + serializeOffset);
+                reader.Position = pos + serializeOffset;
                 for (int i = 0; i < serializeCount; i++)
                 {
                     var startpos = reader.Position;
@@ -118,13 +121,11 @@ public class PzdFile
         }
     }
 
-    private string GetString(FileReader reader, long pos_start)
+    private string GetString(BinaryStream reader, long pos_start)
     {
         var offset = reader.ReadUInt32() + pos_start;
         using (reader.TemporarySeek(offset, SeekOrigin.Begin))
-        {
-            return reader.ReadStringZeroTerminated();
-        }
+            return reader.ReadString(StringCoding.ZeroTerminated);
     }
 
     public void Save(string path)
@@ -140,9 +141,9 @@ public class PzdFile
         PzdHeader.TextContentCount = (uint)TextContents.Count;
         PzdHeader.Magic = "PZDF";
 
-        Dictionary<string, List<(long, long)>> savedStrings = new Dictionary<string, List<(long, long)>>();
+        Dictionary<string, List<(long, long)>> savedStrings = [];
 
-        using (var writer = new FileWriter(stream))
+        using (var writer = new BinaryStream(stream))
         {
             void SaveString(string str, long relative_pos)
             {
@@ -155,7 +156,7 @@ public class PzdFile
 
 
             writer.WriteStruct(PzdHeader);
-            writer.SeekBegin(PzdHeader.TextContentOffset);
+            writer.Position = PzdHeader.TextContentOffset;
             for (int i = 0; i < TextContents.Count; i++)
             {
                 var relative_pos = writer.Position;
@@ -184,7 +185,7 @@ public class PzdFile
                 writer.Write(Serialization[i].Size);
             }
 
-            writer.AlignBytes(16);
+            writer.Align(16);
             foreach (var str in savedStrings)
             {
                 var target = writer.BaseStream.Position;
@@ -203,7 +204,7 @@ public class PzdFile
                 writer.Write(Encoding.UTF8.GetBytes(str.Key));
                 writer.Write((byte)0);
             }
-            writer.AlignBytes(4);
+            writer.Align(4);
 
             var sect_ofs = serialize_pos - writer.BaseStream.Position;
 

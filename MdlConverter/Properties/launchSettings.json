@@ -2,7 +2,7 @@
   "profiles": {
     "MdlConverter": {
       "commandName": "Project",
-      "commandLineArgs": "\"C:\\Program Files (x86)\\Steam\\steamapps\\common\\FINAL FANTASY XVI\\resources_win\\release\\master\\chara\\c1001\\model\\body\\b0001\\body_base\""
+      "commandLineArgs": "\"C:\\Program Files (x86)\\Steam\\steamapps\\common\\FINAL FANTASY XVI\\resources_win\\release\\master\\chara\\c1001\\model\\face\\f0103\\_face_base\""
     }
   }
 }

@@ -1,4 +1,7 @@
-﻿namespace AvaloniaToolbox.Core.Textures
+﻿using FinalFantasy16Library.Imaging.Formats;
+using FinalFantasy16Library.Imaging.Interfaces;
+
+namespace FinalFantasy16Library.Imaging
 {
     public class ImageFormats
     {
@@ -47,21 +50,6 @@
 
         public static ImageEncoder ETC1() => new L8();
         public static ImageEncoder ETC1A4() => new L8();
-
-        public static ImageEncoder Astc4x4(bool srgb = false) => new Astc(Astc.AstcFormat.ASTC_4x4, srgb);
-        public static ImageEncoder Astc5x4(bool srgb = false) => new Astc(Astc.AstcFormat.ASTC_5x4, srgb);
-        public static ImageEncoder Astc5x5(bool srgb = false) => new Astc(Astc.AstcFormat.ASTC_5x5, srgb);
-        public static ImageEncoder Astc6x5(bool srgb = false) => new Astc(Astc.AstcFormat.ASTC_6x5, srgb);
-        public static ImageEncoder Astc6x6(bool srgb = false) => new Astc(Astc.AstcFormat.ASTC_6x6, srgb);
-        public static ImageEncoder Astc8x5(bool srgb = false) => new Astc(Astc.AstcFormat.ASTC_8x5, srgb);
-        public static ImageEncoder Astc8x6(bool srgb = false) => new Astc(Astc.AstcFormat.ASTC_8x6, srgb);
-        public static ImageEncoder Astc8x8(bool srgb = false) => new Astc(Astc.AstcFormat.ASTC_8x8, srgb);
-        public static ImageEncoder Astc10x5(bool srgb = false) => new Astc(Astc.AstcFormat.ASTC_10x5, srgb);
-        public static ImageEncoder Astc10x6(bool srgb = false) => new Astc(Astc.AstcFormat.ASTC_10x6, srgb);
-        public static ImageEncoder Astc10x8(bool srgb = false) => new Astc(Astc.AstcFormat.ASTC_10x8, srgb);
-        public static ImageEncoder Astc10x10(bool srgb = false) => new Astc(Astc.AstcFormat.ASTC_10x10, srgb);
-        public static ImageEncoder Astc12x10(bool srgb = false) => new Astc(Astc.AstcFormat.ASTC_12x10, srgb);
-        public static ImageEncoder Astc12x12(bool srgb = false) => new Astc(Astc.AstcFormat.ASTC_12x12, srgb);
 
         public static uint GetBlockWidth(ImageEncoder format)
         {

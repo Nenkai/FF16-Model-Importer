@@ -1,13 +1,17 @@
 ﻿using FinalFantasy16Library.Files.SKL;
 using FinalFantasy16Library.Utils;
+
 using HKLib.hk2018;
 using HKLib.Serialization.hk2018.Binary;
+
 using IONET;
 using IONET.Core;
 using IONET.Core.Animation;
 using IONET.Core.Model;
 using IONET.Core.Skeleton;
+
 using System.Numerics;
+
 using static HKLib.hk2018.hclVolumeConstraint;
 
 namespace FinalFantasy16Library.Files.ANMB;

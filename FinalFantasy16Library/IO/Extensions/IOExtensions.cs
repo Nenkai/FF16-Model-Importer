@@ -1,86 +1,89 @@
-﻿using Syroot.BinaryData;
+﻿using FinalFantasy16Library.IO.Extensions;
+
+using Syroot.BinaryData;
+using Syroot.BinaryData.Core;
+
 using System.Runtime.InteropServices;
 
-namespace AvaloniaToolbox.Core.IO
+namespace FinalFantasy16Library.IO.Extensions;
+
+public static class IOExtensions
 {
-    public static class IOExtensions
+    //Structs can be a bit faster and more memory efficent
+    //From https://github.com/IcySon55/Kuriimu/blob/master/src/Kontract/IO/Extensions.cs
+    //Read
+    public static unsafe T BytesToStruct<T>(this byte[] buffer, bool isBigEndian = false, int offset = 0)
     {
-        //Structs can be a bit faster and more memory efficent
-        //From https://github.com/IcySon55/Kuriimu/blob/master/src/Kontract/IO/Extensions.cs
-        //Read
-        public static unsafe T BytesToStruct<T>(this byte[] buffer, bool isBigEndian = false, int offset = 0)
+        if (offset < 0) throw new ArgumentOutOfRangeException(nameof(offset));
+
+        AdjustBigEndianByteOrder(typeof(T), buffer, isBigEndian);
+
+        fixed (byte* pBuffer = buffer)
+            return Marshal.PtrToStructure<T>((IntPtr)pBuffer + offset);
+    }
+
+    // Write
+    public static unsafe byte[] StructToBytes<T>(this T item, bool isBigEndian)
+    {
+        var buffer = new byte[Marshal.SizeOf(typeof(T))];
+
+        fixed (byte* pBuffer = buffer)
+            Marshal.StructureToPtr(item, (IntPtr)pBuffer, false);
+
+        AdjustBigEndianByteOrder(typeof(T), buffer, isBigEndian);
+
+        return buffer;
+    }
+
+    //Adjust byte order for big endian
+    private static void AdjustBigEndianByteOrder(Type type, byte[] buffer, bool isBigEndian, int startOffset = 0)
+    {
+        if (!isBigEndian)
+            return;
+
+        if (type.IsPrimitive)
         {
-            if (offset < 0) throw new ArgumentOutOfRangeException(nameof(offset));
-
-            AdjustBigEndianByteOrder(typeof(T), buffer, isBigEndian);
-
-            fixed (byte* pBuffer = buffer)
-                return Marshal.PtrToStructure<T>((IntPtr)pBuffer + offset);
-        }
-
-        // Write
-        public static unsafe byte[] StructToBytes<T>(this T item, bool isBigEndian)
-        {
-            var buffer = new byte[Marshal.SizeOf(typeof(T))];
-
-            fixed (byte* pBuffer = buffer)
-                Marshal.StructureToPtr(item, (IntPtr)pBuffer, false);
-
-            AdjustBigEndianByteOrder(typeof(T), buffer, isBigEndian);
-
-            return buffer;
-        }
-
-        //Adjust byte order for big endian
-        private static void AdjustBigEndianByteOrder(Type type, byte[] buffer, bool isBigEndian, int startOffset = 0)
-        {
-            if (!isBigEndian)
+            if (type == typeof(short) || type == typeof(ushort) ||
+             type == typeof(int) || type == typeof(uint) ||
+             type == typeof(long) || type == typeof(ulong) ||
+              type == typeof(double) || type == typeof(float))
+            {
+                Array.Reverse(buffer);
                 return;
+            }
+        }
 
-            if (type.IsPrimitive)
+        foreach (var field in type.GetFields())
+        {
+            var fieldType = field.FieldType;
+
+            // Ignore static fields
+            if (field.IsStatic) continue;
+
+            if (fieldType.BaseType == typeof(Enum) && fieldType != typeof(Endian))
+                fieldType = fieldType.GetFields()[0].FieldType;
+
+            var offset = Marshal.OffsetOf(type, field.Name).ToInt32();
+            // Enums
+            if (fieldType.IsEnum)
+                fieldType = Enum.GetUnderlyingType(fieldType);
+
+            // Check for sub-fields to recurse if necessary
+            var subFields = fieldType.GetFields().Where(subField => subField.IsStatic == false).ToArray();
+            var effectiveOffset = startOffset + offset;
+
+            if (fieldType == typeof(short) || fieldType == typeof(ushort) ||
+                fieldType == typeof(int) || fieldType == typeof(uint) ||
+                fieldType == typeof(long) || fieldType == typeof(ulong) ||
+                fieldType == typeof(double) || fieldType == typeof(float))
             {
-                if (type == typeof(short) || type == typeof(ushort) ||
-                 type == typeof(int) || type == typeof(uint) ||
-                 type == typeof(long) || type == typeof(ulong) ||
-                  type == typeof(double) || type == typeof(float))
-                {
-                    Array.Reverse(buffer);
-                    return;
-                }
+                if (subFields.Length == 0)
+                    Array.Reverse(buffer, effectiveOffset, Marshal.SizeOf(fieldType));
+
             }
 
-            foreach (var field in type.GetFields())
-            {
-                var fieldType = field.FieldType;
-
-                // Ignore static fields
-                if (field.IsStatic) continue;
-
-                if (fieldType.BaseType == typeof(Enum) && fieldType != typeof(ByteOrder))
-                    fieldType = fieldType.GetFields()[0].FieldType;
-
-                var offset = Marshal.OffsetOf(type, field.Name).ToInt32();
-                // Enums
-                if (fieldType.IsEnum)
-                    fieldType = Enum.GetUnderlyingType(fieldType);
-
-                // Check for sub-fields to recurse if necessary
-                var subFields = fieldType.GetFields().Where(subField => subField.IsStatic == false).ToArray();
-                var effectiveOffset = startOffset + offset;
-
-                if (fieldType == typeof(short) || fieldType == typeof(ushort) ||
-                    fieldType == typeof(int) || fieldType == typeof(uint) ||
-                    fieldType == typeof(long) || fieldType == typeof(ulong) ||
-                    fieldType == typeof(double) || fieldType == typeof(float))
-                {
-                    if (subFields.Length == 0)
-                        Array.Reverse(buffer, effectiveOffset, Marshal.SizeOf(fieldType));
-
-                }
-
-                if (subFields.Length > 0)
-                    AdjustBigEndianByteOrder(fieldType, buffer, isBigEndian, effectiveOffset);
-            }
+            if (subFields.Length > 0)
+                AdjustBigEndianByteOrder(fieldType, buffer, isBigEndian, effectiveOffset);
         }
     }
 }

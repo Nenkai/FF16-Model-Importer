@@ -9,6 +9,8 @@ using FinalFantasy16Library.Files.TEX;
 
 using Newtonsoft.Json;
 
+using SixLabors.ImageSharp;
+
 namespace MdlConverter;
 
 public class Program
@@ -153,7 +155,7 @@ public class Program
         MdlFile mdlFile = new MdlFile(File.OpenRead(arg));
 
         for (int i = 0; i < mdlFile.LODModels.Count; i++)
-            ModelExporter.Export(mdlFile, skeletons, Path.Combine(outDir, $"{modelFileName}_LOD{i}.glb"), i);
+            FaithModelToGLTFConverter.Convert(mdlFile, skeletons, Path.Combine(outDir, $"{modelFileName}_LOD{i}.glb"), i);
     }
 
     private static void HandleModelFolderToModelConversion(string arg)
@@ -174,7 +176,7 @@ public class Program
         Console.WriteLine($"Loading base model: '{baseModel}'");
         MdlFile mdlFile = new MdlFile(File.OpenRead(baseModel));
 
-        ModelImporter.ClearMeshes(mdlFile);
+        GLTFToFaithModelConverter.ClearMeshes(mdlFile);
         for (int i = 0; i < 8; i++)
         {
             string filePathGLTF = Path.Combine(fullPath, $"{name}_LOD{i}.gltf");
@@ -204,14 +206,21 @@ public class Program
                 Console.WriteLine($"Importing LOD{i} (OBJ)");
             }
 
-            var importer = new ModelImporter();
+            var converter = new GLTFToFaithModelConverter();
             if (!string.IsNullOrEmpty(inputPath))
             {
                 //Import LOD level
-                importer.Import(mdlFile, inputPath, false);
+                converter.Convert(mdlFile, inputPath, false);
 
                 // Prepare generated joint info for extra bones not found in base MDL file
-                mdlFile.SetGeneratedJoints(importer.GeneratedJoints);
+                mdlFile.SetGeneratedJoints(converter.GeneratedJoints);
+            }
+            else
+            {
+                if (i == 0)
+                    Console.WriteLine($"ERROR: No main lod! Attempted to load LOD{i} with name {name}_LOD{i} but no suitable file was found (gltf/dae/glb/obj)");
+                else
+                    Console.WriteLine($"Attempted to load LOD{i} with name {name}_LOD{i} but no suitable file was found (gltf/dae/glb/obj) - skipping.");
             }
 
         }

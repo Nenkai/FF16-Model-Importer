@@ -13,14 +13,13 @@ namespace FinalFantasy16Library.Files.MDL.Convert;
 /// <summary>
 /// Handles exporting mdl data with an optional skeleton file given using the IONET library.
 /// </summary>
-public class ModelExporter
+public class FaithModelToGLTFConverter
 {
     /// <summary>
     /// Exports the mdl and skeleton data with a given file path.
     /// Supported output: .dae, .obj, .gltf, .glb
     /// </summary>
-    public static void Export(MdlFile mdlFile, List<SklFile> skeletons, string path, int lod = 0,
-        ProgressTracker progress = null)
+    public static void Convert(MdlFile mdlFile, List<SklFile> skeletons, string path, int lod = 0)
     {
         IOModel iomodel = new IOModel();
 
@@ -41,11 +40,13 @@ public class ModelExporter
             var lodModel = mdlFile.LODModels[i];
 
             Memory<byte> decompressedVbo = vertexBuffer.GetDecompressedData(lodModel.DecompVertexBuffSize);
+            File.WriteAllBytes("test.buf", decompressedVbo.Span);
+
             Memory<byte> decompressedIbo = indexBuffer.GetDecompressedData(lodModel.DecompIdxBuffSize);
 
             for (int j = 0; j < lodModel.MeshCount; j++)
             {
-                progress?.SetProgress(100 * (j / (float)lodModel.MeshCount), $"Loading Mesh {j} LOD {i}");
+                Console.WriteLine($"[{j+1}/{lodModel.MeshCount}] Loading Mesh {j} LOD {i}");
 
                 var mesh = mdlFile.MeshInfos[j + lodModel.MeshIndex];
 
@@ -55,10 +56,8 @@ public class ModelExporter
 
                 var attributeSet = mdlFile.AttributeSets[mesh.FlexVertexInfoID];
                 var attributes = mdlFile.Attributes.GetRange(attributeSet.Idx, attributeSet.Count);
-
-                bool hasAttr8 = attributes.Any(x => x.Type == MdlVertexSemantic.COLOR_5);
-                bool hasAttr9 = attributes.Any(x => x.Type == MdlVertexSemantic.COLOR_5);
-                bool hasAttr24 = attributes.Any(x => x.Type == MdlVertexSemantic.TEXCOORD_13_UNK);
+                foreach (var attr in attributes)
+                    Console.WriteLine($"- {attr}");
 
                 var vertices = MdlBufferHelper.LoadVertices(mdlFile, mesh, decompressedVbo.Span);
                 var x = vertices.FindIndex(e => e.TexCoord1 is not null);
@@ -90,6 +89,22 @@ public class ModelExporter
                         iovertex.SetColor(v.Color.Value.X, v.Color.Value.Y, v.Color.Value.Z, v.Color.Value.W);
                         iomesh.HasColorSet(0);
                     }
+
+                    if (v.UnknownColor5Attr is not null)
+                        iovertex.SetCustom($"_{MdlVertexSemantic.COLOR_5}", v.UnknownColor5Attr);
+                    if (v.UnknownColor6Attr is not null)
+                        iovertex.SetCustom($"_{MdlVertexSemantic.COLOR_6}", v.UnknownColor6Attr);
+
+                    if (v.UnkTexcoord4Attr is not null)
+                        iovertex.SetCustom($"_{MdlVertexSemantic.TEXCOORD_4}", v.UnkTexcoord4Attr);
+                    if (v.UnkTexcoord5Attr is not null)
+                        iovertex.SetCustom($"_{MdlVertexSemantic.TEXCOORD_5}", v.UnkTexcoord5Attr);
+                    if (v.UnkTexcoord8Attr is not null)
+                        iovertex.SetCustom($"_{MdlVertexSemantic.TEXCOORD_8}", v.UnkTexcoord8Attr);
+                    if (v.UnkTexcoord9Attr is not null)
+                        iovertex.SetCustom($"_{MdlVertexSemantic.TEXCOORD_9}", v.UnkTexcoord9Attr);
+                    if (v.UnkTexcoord13Attr is not null)
+                        iovertex.SetCustom($"_{MdlVertexSemantic.TEXCOORD_13}", v.UnkTexcoord13Attr);
 
                     var boneIndices = v.GetBoneIndices();
                     var boneWeights = v.GetBoneWeights();
@@ -211,7 +226,7 @@ public class ModelExporter
             }
         }
 
-        progress?.SetProgress(50, $"Exporting Scene");
+        Console.WriteLine("Exporting Scene");
 
         IOScene scene = new IOScene();
         scene.Models.Add(iomodel);

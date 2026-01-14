@@ -1,4 +1,4 @@
-﻿namespace AvaloniaToolbox.Core.Textures
+﻿namespace FinalFantasy16Library.Imaging.Interfaces
 {
     public interface ImageBlockFormat
     {

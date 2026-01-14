@@ -1,5 +1,8 @@
-﻿using AvaloniaToolbox.Core.IO;
-using System.Runtime.InteropServices;
+﻿using System.Runtime.InteropServices;
+
+using Syroot.BinaryData;
+
+using FinalFantasy16Library.Utils;
 
 namespace FinalFantasy16Library.Files.PAC;
 
@@ -11,18 +14,18 @@ public class PacFile
 
     public PacFile(Stream stream)
     {
-        Read(new FileReader(stream));
+        Read(new BinaryStream(stream));
     }
 
-    private void Read(FileReader r)
+    private void Read(BinaryStream r)
     {
-        r.ReadSignature("PACK");
+        r.ReadSignature("PACK"u8);
         uint headerSize = r.ReadUInt32(); //size
 
-        r.SeekBegin(0);
+        r.Position = 0;
         byte[] header = r.ReadBytes((int)headerSize);
 
-        var reader = new FileReader(new MemoryStream(header));
+        var reader = new BinaryStream(new MemoryStream(header));
 
         reader.Position = 8;
         uint numFiles = reader.ReadUInt32();
@@ -35,17 +38,17 @@ public class PacFile
         if (encrypted)
             XorEncrypt.CryptHeaderPart(header.AsSpan(0x18, 0x100));
 
-        ArchiveDirName = reader.ReadStringZeroTerminated();
+        ArchiveDirName = reader.ReadString(StringCoding.ZeroTerminated);
 
         reader.Position = 0x118;
         ulong chunkOffset = reader.ReadUInt64();
         ulong stringTableOffset = reader.ReadUInt64();
         ulong stringTableSize = reader.ReadUInt64();
 
-        reader.SeekBegin(0x400);
+        reader.Position = 0x400;
         var fileHeaders = reader.ReadMultipleStructs<PacFileEntry>(numFiles);
 
-        reader.SeekBegin((int)chunkOffset);
+        reader.Position = (int)chunkOffset;
         var chunkHeaders = reader.ReadMultipleStructs<ChunkEntry>(numChunks);
 
         if (encrypted)
@@ -56,11 +59,11 @@ public class PacFile
             FileEntry f = new FileEntry();
             f.Header = fHeader;
 
-            r.SeekBegin((int)fHeader.DataOffset);
+            reader.Position = (int)fHeader.DataOffset;
             f.Data = r.ReadBytes((int)fHeader.CompressedFileSize);
 
-            reader.SeekBegin((int)fHeader.FileNameOffset);
-            f.FileName = reader.ReadStringZeroTerminated();
+            reader.Position = (int)fHeader.FileNameOffset;
+            f.FileName = reader.ReadString(StringCoding.ZeroTerminated);
 
             // Debug.WriteLine($"{f.FileName} {fHeader.CompressedFileSize}");
 

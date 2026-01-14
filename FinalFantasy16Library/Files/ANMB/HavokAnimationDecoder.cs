@@ -1,8 +1,10 @@
-﻿using System.Collections.Generic;
+﻿using HKLib.hk2018;
+
+using System.Collections.Generic;
 using System.Numerics;
 using System.Runtime.InteropServices;
 
-namespace HKLib.hk2018;
+namespace FinalFantasy16Library.Files.ANMB;
 
 /// <summary>
 /// Generic animation decoder utility for Havok animations.
@@ -18,8 +20,7 @@ public static class HavokAnimationDecoder
     /// <returns>List of frames, where each frame contains bone transforms</returns>
     public static List<List<hkQsTransform>> DecodeAnimation(hkaAnimation animation, hkaSkeleton? skeleton = null)
     {
-        if (animation == null)
-            throw new ArgumentNullException(nameof(animation));
+        ArgumentNullException.ThrowIfNull(animation);
 
         return animation.m_type switch
         {
@@ -128,7 +129,7 @@ public static class PredictiveCompressedDecoder
                 }
             }
 
-            List<int> boneNeedRecoverW = new List<int>();
+            List<int> boneNeedRecoverW = [];
 
             // Process static values
             ProcessStaticValues(animation, allTracks, numFloatsPerBone, boneNeedRecoverW);
@@ -349,7 +350,7 @@ public static class InterleavedUncompressedDecoder
 {
     public static List<List<hkQsTransform>> Decode(hkaInterleavedUncompressedAnimation animation)
     {
-        List<List<hkQsTransform>> allTracks = new();
+        List<List<hkQsTransform>> allTracks = [];
 
         if (animation.m_numberOfTransformTracks == 0 || animation.m_transforms.Count == 0)
         {

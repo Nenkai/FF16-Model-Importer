@@ -5,11 +5,13 @@ using FinalFantasy16Library.Utils;
 using IONET;
 using IONET.Core.Model;
 
+using Syroot.BinaryData;
+
 using static FinalFantasy16Library.Files.MDL.Helpers.MdlBufferHelper;
 
 namespace FinalFantasy16Library.Files.MDL.Convert;
 
-public class ModelImporter
+public class GLTFToFaithModelConverter
 {
     private List<string> _vertexSetCompare = [];
 
@@ -20,7 +22,7 @@ public class ModelImporter
 
     public IReadOnlyList<GeneratedJointData> GeneratedJoints => _generatedJoints;
 
-    public ModelImporter()
+    public GLTFToFaithModelConverter()
     {
         _generatedBoneIndices = new Dictionary<string, int>();
         _nextBoneIndex = 0;
@@ -109,7 +111,7 @@ public class ModelImporter
         mdlFile.idxBuffers = [];
     }
 
-    public void Import(MdlFile mdlFile, string path, bool clearExistingMeshes = true, ProgressTracker progress = null)
+    public void Convert(MdlFile mdlFile, string path, bool clearExistingMeshes = true, ProgressTracker progress = null)
     {
         progress?.SetProgress(10, "Loading model file");
 
@@ -133,15 +135,15 @@ public class ModelImporter
         var vBuffer = new MemoryStream();
         var idxBuffer = new MemoryStream();
 
-        using (var vWriter = new BinaryWriter(vBuffer))
-        using (var idxWriter = new BinaryWriter(idxBuffer))
+        using (var vWriter = new BinaryStream(vBuffer))
+        using (var idxWriter = new BinaryStream(idxBuffer))
         {
             MdlLODModelInfo modelInfo = new MdlLODModelInfo();
             modelInfo.MeshIndex = (ushort)mdlFile.MeshInfos.Count;
 
             List<MdlMeshInfo> meshes = [];
 
-            int index = 0;
+            uint index = 0;
             foreach (var iomesh in model.Meshes)
             {
                 if (iomesh.Polygons.Count == 0)
@@ -154,7 +156,7 @@ public class ModelImporter
 
                 progress?.SetProgress(100 * (float)index / model.Meshes.Count, $"Loading mesh ");
 
-                MdlMeshInfo mesh = ImportMesh(mdlFile, iomesh, mat, vWriter, idxWriter);
+                MdlMeshInfo mesh = ImportMesh(mdlFile, iomesh, mat, vWriter, idxWriter, index);
                 meshes.Add(mesh);
                 index++;
             }
@@ -185,7 +187,7 @@ public class ModelImporter
 
 
     public MdlMeshInfo ImportMesh(MdlFile mdlFile, IOMesh iomesh, string materialName,
-        BinaryWriter vWriter, BinaryWriter idxWriter)
+        BinaryStream vWriter, BinaryStream idxWriter, uint index)
     {
         MdlMeshInfo mesh = new MdlMeshInfo();
 
@@ -197,8 +199,27 @@ public class ModelImporter
         if (iomesh.HasUVSet(2)) mesh.TexCoordSetFlag |= MdlMeshTexCoordFlags.USE_UV2;
         if (iomesh.HasUVSet(3)) mesh.TexCoordSetFlag |= MdlMeshTexCoordFlags.USE_UV3;
 
-        //Second flag, unsure what this does
-        mesh.Flag2 = 0;
+        // This flag is reponsible for allocating a buffer & SRV. It is used as some kind of key into an unordered map too
+        // If we leave it to zero, the clive's face model (and presumably any other advanced model) will kind of break (beard will be all dark)
+        //
+        // Behavior is essentially described as such:
+        // if the unordered map contains this
+        //   -> allocate buffer & SRV
+        // otherwise do nothing
+        //
+        // It's labeled as "flag" because it is clearly one. there is no apparent behavior other than each unique value
+        // will have their own buffer & srv.
+        //
+        // Therefore, we don't know what to place here. Just use it as an id instead.
+        // [OLD NOTE] -> This WILL allocate a buffer and SRV per buffer, but for modding purposes.. it'll be fine.
+        // 
+        // Turns out this doesn't work. There's probably more involved with the value...
+        // For now just 0xFF it lol
+        // Useful signature for referencing code:
+        // - faith::Graphics::ModelResourceHandle::sub_7FF6B0E2051C / 48 89 5C 24 ? 48 89 74 24 ? 48 89 7C 24 ? 55 41 56 41 57 48 8B EC 48 83 EC ? 83 65 ? ? 44 8B FA
+        // - CreateAndInsertUnkGraphicsUnorderedList / 48 89 5C 24 ? 55 56 57 41 54 41 55 41 56 41 57 48 83 EC ? 48 83 B9
+        // - faith::Graphics::ModelResourceHandle::RemoveSubmeshBuffers / 48 89 4C 24 ? 53 55 56 57 41 54 41 55 41 56 41 57 48 83 EC ? 48 83 B9
+        mesh.Flag2 = 0xFF;
 
         mesh.MaterialID = 0;
         if (mdlFile.MaterialNames.Contains(materialName))
@@ -226,13 +247,46 @@ public class ModelImporter
                 Color = iomesh.HasColorSet(0) ? vtx.Colors[0] : null,
             };
 
+            if (vertex.Binormal is null && vertex.Normal is not null && vertex.Tangent is not null)
+            {
+                vertex.Binormal = new Vector4(
+                    Vector3.Normalize(Vector3.Cross(vertex.Normal.Value, new Vector3(vertex.Tangent.Value.X, vertex.Tangent.Value.Y, vertex.Tangent.Value.Z))
+                                      * vertex.Tangent.Value.W),
+                    1.0f
+                );
+            }
+
+            foreach (var customAttr in vtx.CustomAttributes)
+            {
+                switch (customAttr.Key)
+                {
+                    case "_COLOR_5":
+                        vertex.UnknownColor5Attr = (Vector4)customAttr.Value; break;
+                    case "_COLOR_6":
+                        vertex.UnknownColor6Attr = (Vector4)customAttr.Value; break;
+                    case "_TEXCOORD_4":
+                        vertex.UnkTexcoord4Attr = (Vector4)customAttr.Value; break;
+                    case "_TEXCOORD_5":
+                        vertex.UnkTexcoord5Attr = (Vector4)customAttr.Value; break;
+                    case "_TEXCOORD_8":
+                        vertex.UnkTexcoord8Attr = (Vector4)customAttr.Value; break;
+                    case "_TEXCOORD_9":
+                        vertex.UnkTexcoord9Attr = (Vector4)customAttr.Value; break;
+                    case "_TEXCOORD_13":
+                        vertex.UnkTexcoord9Attr = (Vector4)customAttr.Value; break;
+                    default:
+                        Console.WriteLine($"WARNING: Unsupported vertex semantic {customAttr.Key}.");
+                        break;
+                }
+            }
+
             List<int> boneIndices = [];
             List<float> boneWeights = [];
 
             foreach (var env in vtx.Envelope.Weights)
             {
                 // Index is now generated by GetBoneIndex method
-                int index = GetBoneIndex(env.BoneName, mdlFile, iomesh);
+                int boneIndex = GetBoneIndex(env.BoneName, mdlFile, iomesh);
 
                 // Track which bones are getting extended indices
                 if (!mdlFile.JointNames.Contains(env.BoneName) && !extended_bones.Contains(env.BoneName))
@@ -240,7 +294,7 @@ public class ModelImporter
                     extended_bones.Add(env.BoneName);
                 }
 
-                boneIndices.Add(index);
+                boneIndices.Add(boneIndex);
                 boneWeights.Add(env.Weight);
             }
 
@@ -308,8 +362,13 @@ public class ModelImporter
         bool hasColors = false;
 
         bool hasUnkAttr24 = false;
-        bool hasUnkAttr8 = false;
-        bool hasUnkAttr9 = false;
+        bool hasColor5Attr = false;
+        bool hasColor6Attr = false;
+
+        bool hasTexcoord4Attr = false;
+        bool hasTexcoord5Attr = false;
+        bool hasTexcoord8Attr = false;
+        bool hasTexcoord9Attr = false;
         foreach (var vertex in vertices)
         {
             if (vertex.TexCoord0 is not null) hasTexCoords[0] = true;
@@ -327,6 +386,13 @@ public class ModelImporter
             if (vertex.Tangent is not null) hasTangent = true;
             if (vertex.Binormal is not null) hasBinormal = true;
             if (vertex.Color is not null) hasColors = true;
+
+            if (vertex.UnknownColor5Attr is not null) hasColor5Attr = true;
+            if (vertex.UnknownColor6Attr is not null) hasColor6Attr = true;
+            if (vertex.UnkTexcoord4Attr is not null) hasTexcoord4Attr = true;
+            if (vertex.UnkTexcoord5Attr is not null) hasTexcoord5Attr = true;
+            if (vertex.UnkTexcoord8Attr is not null) hasTexcoord8Attr = true;
+            if (vertex.UnkTexcoord9Attr is not null) hasTexcoord9Attr = true;
         }
 
         void AddAttribute(MdlVertexSemantic type, EncodingFormat format, ref byte offset, byte buffer = 0)
@@ -383,11 +449,23 @@ public class ModelImporter
                 AddAttribute(MdlVertexSemantic.COLOR_0, EncodingFormat.UNORM8x4, ref offset2, 1);
 
             if (hasUnkAttr24)
-                AddAttribute(MdlVertexSemantic.TEXCOORD_13_UNK, EncodingFormat.HALFFLOATx4, ref offset2, 1);
-            if (hasUnkAttr8)
-                AddAttribute(MdlVertexSemantic.COLOR_5, EncodingFormat.UINT8x4, ref offset2, 1);
-            if (hasUnkAttr9)
-                AddAttribute(MdlVertexSemantic.COLOR_6, EncodingFormat.UNORM8x4, ref offset2, 1);
+                AddAttribute(MdlVertexSemantic.TEXCOORD_13, EncodingFormat.HALFFLOATx4, ref offset2, 1);
+
+            // Used by face models
+            if (hasTexcoord8Attr)
+                AddAttribute(MdlVertexSemantic.TEXCOORD_8, EncodingFormat.UNORM8x4, ref offset2, 1);
+            if (hasTexcoord9Attr)
+                AddAttribute(MdlVertexSemantic.TEXCOORD_9, EncodingFormat.UINT8x4, ref offset2, 1);
+            if (hasTexcoord4Attr)
+                AddAttribute(MdlVertexSemantic.TEXCOORD_4, EncodingFormat.UNORM8x4, ref offset2, 1);
+            if (hasTexcoord5Attr)
+                AddAttribute(MdlVertexSemantic.TEXCOORD_5, EncodingFormat.UINT8x4, ref offset2, 1);
+
+            // Generally always present?
+            if (hasColor5Attr)
+                AddAttribute(MdlVertexSemantic.COLOR_5, EncodingFormat.UNORM8x4, ref offset2, 1);
+            if (hasColor6Attr)
+                AddAttribute(MdlVertexSemantic.COLOR_6, EncodingFormat.UINT8x4, ref offset2, 1);
         }
 
         return vertexAttributes;

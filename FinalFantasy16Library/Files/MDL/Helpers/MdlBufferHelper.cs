@@ -1,5 +1,6 @@
 ﻿using System.Numerics;
 
+using Syroot.BinaryData;
 using Syroot.BinaryData.Memory;
 using FinalFantasy16Library.Utils;
 
@@ -63,11 +64,20 @@ public class MdlBufferHelper
                         vertex.BoneIndices1 = ReadVector4(ref reader, attribute);
                         break;
                     case MdlVertexSemantic.BLENDWEIGHT_1: vertex.BoneWeights1 = ReadVector4(ref reader, attribute); break;
-                    case MdlVertexSemantic.COLOR_5: vertex.UnknownAttr8 = ReadVector4(ref reader, attribute); break;
-                    case MdlVertexSemantic.COLOR_6: vertex.UnknownAttr9 = ReadVector4(ref reader, attribute); break;
+
                     case MdlVertexSemantic.COLOR_0: vertex.Color = ReadVector4(ref reader, attribute); break;
+
+                    // Undocumented ones
+                    case MdlVertexSemantic.TEXCOORD_4: vertex.UnkTexcoord4Attr = ReadVector4(ref reader, attribute); break;
+                    case MdlVertexSemantic.TEXCOORD_5: vertex.UnkTexcoord5Attr = ReadVector4(ref reader, attribute); break;
+                    case MdlVertexSemantic.TEXCOORD_8: vertex.UnkTexcoord8Attr = ReadVector4(ref reader, attribute); break;
+                    case MdlVertexSemantic.TEXCOORD_9: vertex.UnkTexcoord9Attr = ReadVector4(ref reader, attribute); break;
+                    case MdlVertexSemantic.TEXCOORD_13: vertex.UnkTexcoord9Attr = ReadVector4(ref reader, attribute); break;
+                    case MdlVertexSemantic.COLOR_5: vertex.UnknownColor5Attr = ReadVector4(ref reader, attribute); break;
+                    case MdlVertexSemantic.COLOR_6: vertex.UnknownColor6Attr = ReadVector4(ref reader, attribute); break;
+                    
                     default:
-                        break;
+                        throw new NotSupportedException($"Vertex Semantic {attribute.Type} not yet supported");
                 }
             }
         }
@@ -87,7 +97,7 @@ public class MdlBufferHelper
         return indices;
     }
 
-    public static void WriteIndicesBuffer(MdlMeshInfo subMesh, List<ushort> indices, BinaryWriter writer)
+    public static void WriteIndicesBuffer(MdlMeshInfo subMesh, List<ushort> indices, BinaryStream writer)
     {
         subMesh.FaceIndicesOffset = (uint)writer.BaseStream.Position / 2;
         subMesh.FaceIndexCount = (uint)indices.Count;
@@ -97,7 +107,7 @@ public class MdlBufferHelper
     }
 
     public static void WriteVertexBuffer(MdlFile mdlFile,
-        MdlMeshInfo mesh, List<Vertex> vertices, BinaryWriter writer)
+        MdlMeshInfo mesh, List<Vertex> vertices, BinaryStream writer)
     {
         mesh.VertexCount = (ushort)vertices.Count;
 
@@ -126,6 +136,8 @@ public class MdlBufferHelper
                     var ofs = mesh.BufferOffsets[bufferIdx] + v * mesh.Strides[attribute.BufferIdx] + attribute.Offset;
                     writer.BaseStream.Seek(ofs, SeekOrigin.Begin);
 
+                    // NOTE: The game has a BITANGENT component, but GLTF doesn't.
+                    // We merely skip it.
                     switch (attribute.Type)
                     {
                         case MdlVertexSemantic.POSITION: WriteVector(writer, vertices[v].Position, attribute); break;
@@ -161,11 +173,29 @@ public class MdlBufferHelper
 
                         case MdlVertexSemantic.BLENDINDICES_0: WriteVector(writer, vertices[v].BoneIndices0, attribute); break;
                         case MdlVertexSemantic.BLENDWEIGHT_0: WriteVector(writer, vertices[v].BoneWeights0, attribute); break;
-                        case MdlVertexSemantic.BLENDINDICES_1: WriteVector(writer, vertices[v].BoneIndices1, attribute); break;
+                        case MdlVertexSemantic.BLENDINDICES_1:
+                            if (vertices[v].BoneIndices1 is not null)
+                            {
+                                WriteVector(writer, vertices[v].BoneIndices1, attribute);
+                            }
+                            else if (vertices[v].BoneIndices0 is not null)
+                            {
+                                // If BLENDINDICES0 is empty, the game simply repeats the first byte to the bytes of BLENDINDICES1.
+                                var bones0 = vertices[v].BoneIndices0!.Value;
+                                WriteVector(writer, new Vector4(bones0.X), attribute);
+                            }
+                            else
+                                WriteVector(writer, vertices[v].BoneIndices1, attribute);
+
+                            break;
                         case MdlVertexSemantic.BLENDWEIGHT_1: WriteVector(writer, vertices[v].BoneWeights1, attribute); break;
-                        case MdlVertexSemantic.COLOR_5: WriteVector(writer, vertices[v].UnknownAttr8, attribute); break;
-                        case MdlVertexSemantic.COLOR_6: WriteVector(writer, vertices[v].UnknownAttr9, attribute); break;
-                        case MdlVertexSemantic.TEXCOORD_13_UNK: WriteVector(writer, vertices[v].UnknownAttr24, attribute); break;
+                        case MdlVertexSemantic.COLOR_5: WriteVector(writer, vertices[v].UnknownColor5Attr, attribute); break;
+                        case MdlVertexSemantic.COLOR_6: WriteVector(writer, vertices[v].UnknownColor6Attr, attribute); break;
+                        case MdlVertexSemantic.TEXCOORD_4: WriteVector(writer, vertices[v].UnkTexcoord4Attr, attribute); break;
+                        case MdlVertexSemantic.TEXCOORD_5: WriteVector(writer, vertices[v].UnkTexcoord5Attr, attribute); break;
+                        case MdlVertexSemantic.TEXCOORD_8: WriteVector(writer, vertices[v].UnkTexcoord8Attr, attribute); break;
+                        case MdlVertexSemantic.TEXCOORD_9: WriteVector(writer, vertices[v].UnkTexcoord9Attr, attribute); break;
+                        case MdlVertexSemantic.TEXCOORD_13: WriteVector(writer, vertices[v].UnkTexcoord13Attr, attribute); break;
                         case MdlVertexSemantic.COLOR_0: WriteVector(writer, vertices[v].Color, attribute); break;
                         default:
                             throw new Exception($"Attribute {attribute.Type} not supported!");
@@ -277,7 +307,7 @@ public class MdlBufferHelper
 
     #region Write Vectors
 
-    static void WriteVector(BinaryWriter writer, Vector3? value, MdlFlexVertexAttribute attr)
+    static void WriteVector(BinaryStream writer, Vector3? value, MdlFlexVertexAttribute attr)
     {
         if (value is null)
         {
@@ -289,22 +319,22 @@ public class MdlBufferHelper
 
         if (attr.Format == EncodingFormat.HALFFLOATx4)
         {
-            writer.Write((Half)value.Value.X);
-            writer.Write((Half)value.Value.Y);
-            writer.Write((Half)value.Value.Z);
+            writer.WriteHalf((Half)value.Value.X);
+            writer.WriteHalf((Half)value.Value.Y);
+            writer.WriteHalf((Half)value.Value.Z);
             writer.Write((ushort)0);
         }
         else if (attr.Format == EncodingFormat.FLOATx3)
         {
-            writer.Write(value.Value.X);
-            writer.Write(value.Value.Y);
-            writer.Write(value.Value.Z);
+            writer.WriteSingle(value.Value.X);
+            writer.WriteSingle(value.Value.Y);
+            writer.WriteSingle(value.Value.Z);
         }
         else
             throw new Exception($"Unsupported format {attr.Format}");
     }
 
-    static void WriteVector(BinaryWriter writer, Vector4? value, MdlFlexVertexAttribute attr)
+    static void WriteVector(BinaryStream writer, Vector4? value, MdlFlexVertexAttribute attr)
     {
         if (value is null)
         {
@@ -316,60 +346,59 @@ public class MdlBufferHelper
 
         if (attr.Format == EncodingFormat.HALFFLOATx4)
         {
-            writer.Write((Half)value.Value.X);
-            writer.Write((Half)value.Value.Y);
-            writer.Write((Half)value.Value.Z);
-            writer.Write((Half)value.Value.W);
+            writer.WriteHalf((Half)value.Value.X);
+            writer.WriteHalf((Half)value.Value.Y);
+            writer.WriteHalf((Half)value.Value.Z);
+            writer.WriteHalf((Half)value.Value.W);
         }
         else if (attr.Format == EncodingFormat.FLOATx2)
         {
-            writer.Write(value.Value.X);
-            writer.Write(value.Value.Y);
+            writer.WriteSingle(value.Value.X);
+            writer.WriteSingle(value.Value.Y);
         }
         else if (attr.Format == EncodingFormat.HALFFLOATx2)
         {
-            writer.Write((Half)value.Value.X);
-            writer.Write((Half)value.Value.Y);
+            writer.WriteHalf((Half)value.Value.X);
+            writer.WriteHalf((Half)value.Value.Y);
         }
         else if (attr.Format == EncodingFormat.FLOATx4)
         {
-            writer.Write(value.Value.X);
-            writer.Write(value.Value.Y);
-            writer.Write(value.Value.Z);
-            writer.Write(value.Value.W);
+            writer.WriteSingle(value.Value.X);
+            writer.WriteSingle(value.Value.Y);
+            writer.WriteSingle(value.Value.Z);
+            writer.WriteSingle(value.Value.W);
         }
         else if (attr.Format == EncodingFormat.UNORM8x4)
         {
-            writer.Write((byte)(value.Value.X * byte.MaxValue));
-            writer.Write((byte)(value.Value.Y * byte.MaxValue));
-            writer.Write((byte)(value.Value.Z * byte.MaxValue));
-            writer.Write((byte)(value.Value.W * byte.MaxValue));
+            writer.WriteByte((byte)(value.Value.X * byte.MaxValue));
+            writer.WriteByte((byte)(value.Value.Y * byte.MaxValue));
+            writer.WriteByte((byte)(value.Value.Z * byte.MaxValue));
+            writer.WriteByte((byte)(value.Value.W * byte.MaxValue));
         }
         else if (attr.Format == EncodingFormat.UINT8x4)
         {
-            writer.Write((byte)value.Value.X);
-            writer.Write((byte)value.Value.Y);
-            writer.Write((byte)value.Value.Z);
-            writer.Write((byte)value.Value.W);
+            writer.WriteByte((byte)value.Value.X);
+            writer.WriteByte((byte)value.Value.Y);
+            writer.WriteByte((byte)value.Value.Z);
+            writer.WriteByte((byte)value.Value.W);
         }
         else
             throw new Exception($"Unsupported format {attr.Format}");
     }
 
-    static void WriteVector(BinaryWriter writer, Vector2? value, MdlFlexVertexAttribute attr)
+    static void WriteVector(BinaryStream writer, Vector2? value, MdlFlexVertexAttribute attr)
     {
-        if (value is null)
-            value = Vector2.Zero;
+        value ??= Vector2.Zero;
 
         if (attr.Format == EncodingFormat.FLOATx2)
         {
-            writer.Write(value.Value.X);
-            writer.Write(value.Value.Y);
+            writer.WriteSingle(value.Value.X);
+            writer.WriteSingle(value.Value.Y);
         }
         else if (attr.Format == EncodingFormat.HALFFLOATx2)
         {
-            writer.Write((Half)value.Value.X);
-            writer.Write((Half)value.Value.Y);
+            writer.WriteHalf((Half)value.Value.X);
+            writer.WriteHalf((Half)value.Value.Y);
         }
         else
             throw new Exception($"Unsupported format {attr.Format}");
@@ -396,9 +425,14 @@ public class MdlBufferHelper
         public Vector4? Tangent { get; set; }
         public Vector4? Binormal { get; set; }
 
-        public Vector4? UnknownAttr8 { get; set; }
-        public Vector4? UnknownAttr9 { get; set; }
-        public Vector4? UnknownAttr24 { get; set; }
+        // c1001/f0103 (clive's face) pretty much has all these.
+        public Vector4? UnkTexcoord4Attr { get; set; }
+        public Vector4? UnkTexcoord5Attr { get; set; }
+        public Vector4? UnkTexcoord8Attr { get; set; }
+        public Vector4? UnkTexcoord9Attr { get; set; }
+        public Vector4? UnknownColor5Attr { get; set; }
+        public Vector4? UnknownColor6Attr { get; set; }
+        public Vector4? UnkTexcoord13Attr { get; set; }
 
         public List<int> GetBoneIndices()
         {

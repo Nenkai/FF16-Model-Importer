@@ -3,7 +3,7 @@ using SixLabors.ImageSharp.PixelFormats;
 using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.Advanced;
 
-namespace AvaloniaToolbox.Core
+namespace FinalFantasy16Library.Imaging.ImageSharp
 {
     public static class ImageSharpExtension
     {

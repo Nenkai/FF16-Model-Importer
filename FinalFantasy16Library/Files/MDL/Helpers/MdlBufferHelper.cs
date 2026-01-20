@@ -68,14 +68,16 @@ public class MdlBufferHelper
                     case MdlVertexSemantic.COLOR_0: vertex.Color = ReadVector4(ref reader, attribute); break;
 
                     // Undocumented ones
-                    case MdlVertexSemantic.TEXCOORD_4: vertex.UnkTexcoord4Attr = ReadVector4(ref reader, attribute); break;
-                    case MdlVertexSemantic.TEXCOORD_5: vertex.UnkTexcoord5Attr = ReadVector4(ref reader, attribute); break;
-                    case MdlVertexSemantic.TEXCOORD_8: vertex.UnkTexcoord8Attr = ReadVector4(ref reader, attribute); break;
-                    case MdlVertexSemantic.TEXCOORD_9: vertex.UnkTexcoord9Attr = ReadVector4(ref reader, attribute); break;
+                    case MdlVertexSemantic.TEXCOORD_4: vertex.UnkTexcoord4Attr = ReadVector4(ref reader, attribute); break; // Face model
+                    case MdlVertexSemantic.TEXCOORD_5: vertex.UnkTexcoord5Attr = ReadVector4(ref reader, attribute); break; // Face model
+                    case MdlVertexSemantic.TEXCOORD_8: vertex.UnkTexcoord8Attr = ReadVector4(ref reader, attribute); break; // Face model
+                    case MdlVertexSemantic.TEXCOORD_9: vertex.UnkTexcoord9Attr = ReadVector4(ref reader, attribute); break; // Face model
                     case MdlVertexSemantic.TEXCOORD_13: vertex.UnkTexcoord9Attr = ReadVector4(ref reader, attribute); break;
-                    case MdlVertexSemantic.COLOR_5: vertex.UnknownColor5Attr = ReadVector4(ref reader, attribute); break;
-                    case MdlVertexSemantic.COLOR_6: vertex.UnknownColor6Attr = ReadVector4(ref reader, attribute); break;
-                    
+                    case MdlVertexSemantic.COLOR_1: vertex.UnknownColor1Attr = ReadVector4(ref reader, attribute); break;  // Head/Hair model
+                    case MdlVertexSemantic.COLOR_5: vertex.UnknownColor5Attr = ReadVector4(ref reader, attribute); break; // All but map models
+                    case MdlVertexSemantic.COLOR_6: vertex.UnknownColor6Attr = ReadVector4(ref reader, attribute); break; // All but map models
+                    case MdlVertexSemantic.COLOR_7: vertex.UnknownColor7Attr = ReadVector4(ref reader, attribute); break;  // Head/Hair model
+
                     default:
                         throw new NotSupportedException($"Vertex Semantic {attribute.Type} not yet supported");
                 }
@@ -189,12 +191,14 @@ public class MdlBufferHelper
 
                             break;
                         case MdlVertexSemantic.BLENDWEIGHT_1: WriteVector(writer, vertices[v].BoneWeights1, attribute); break;
-                        case MdlVertexSemantic.COLOR_5: WriteVector(writer, vertices[v].UnknownColor5Attr, attribute); break;
-                        case MdlVertexSemantic.COLOR_6: WriteVector(writer, vertices[v].UnknownColor6Attr, attribute); break;
-                        case MdlVertexSemantic.TEXCOORD_4: WriteVector(writer, vertices[v].UnkTexcoord4Attr, attribute); break;
-                        case MdlVertexSemantic.TEXCOORD_5: WriteVector(writer, vertices[v].UnkTexcoord5Attr, attribute); break;
-                        case MdlVertexSemantic.TEXCOORD_8: WriteVector(writer, vertices[v].UnkTexcoord8Attr, attribute); break;
-                        case MdlVertexSemantic.TEXCOORD_9: WriteVector(writer, vertices[v].UnkTexcoord9Attr, attribute); break;
+                        case MdlVertexSemantic.COLOR_1: WriteVector(writer, vertices[v].UnknownColor1Attr, attribute); break; // Head/Hair model
+                        case MdlVertexSemantic.COLOR_5: WriteVector(writer, vertices[v].UnknownColor5Attr, attribute); break; // All but map models
+                        case MdlVertexSemantic.COLOR_6: WriteVector(writer, vertices[v].UnknownColor6Attr, attribute); break; // All but map models
+                        case MdlVertexSemantic.COLOR_7: WriteVector(writer, vertices[v].UnknownColor7Attr, attribute); break; // Head/Hair model
+                        case MdlVertexSemantic.TEXCOORD_4: WriteVector(writer, vertices[v].UnkTexcoord4Attr, attribute); break; // Face model
+                        case MdlVertexSemantic.TEXCOORD_5: WriteVector(writer, vertices[v].UnkTexcoord5Attr, attribute); break; // Face model
+                        case MdlVertexSemantic.TEXCOORD_8: WriteVector(writer, vertices[v].UnkTexcoord8Attr, attribute); break; // Face model
+                        case MdlVertexSemantic.TEXCOORD_9: WriteVector(writer, vertices[v].UnkTexcoord9Attr, attribute); break; // Face model
                         case MdlVertexSemantic.TEXCOORD_13: WriteVector(writer, vertices[v].UnkTexcoord13Attr, attribute); break;
                         case MdlVertexSemantic.COLOR_0: WriteVector(writer, vertices[v].Color, attribute); break;
                         default:
@@ -430,8 +434,10 @@ public class MdlBufferHelper
         public Vector4? UnkTexcoord5Attr { get; set; }
         public Vector4? UnkTexcoord8Attr { get; set; }
         public Vector4? UnkTexcoord9Attr { get; set; }
+        public Vector4? UnknownColor1Attr { get; set; }
         public Vector4? UnknownColor5Attr { get; set; }
         public Vector4? UnknownColor6Attr { get; set; }
+        public Vector4? UnknownColor7Attr { get; set; }
         public Vector4? UnkTexcoord13Attr { get; set; }
 
         public List<int> GetBoneIndices()

@@ -41,33 +41,27 @@ public class Program
             Console.WriteLine("- Import XML to PZD (will overwrite if exists):");
             Console.WriteLine("     MdlConverter.exe text.pzd.xml");
         }
+
         foreach (string arg in args)
         {
             if (arg.EndsWith(".tex"))
                 HandleTexToImageConversion(arg);
-
-            if (arg.EndsWith(".tex.png"))
+            else if (arg.EndsWith(".tex.png"))
                 HandleImageToTexConversion(arg);
-
-            if (Directory.Exists(arg)) //folder to compile back as
+            else if(Directory.Exists(arg)) //folder to compile back as
                 HandleModelFolderToModelConversion(arg);
-
-            if (arg.EndsWith(".mdl"))
+            else if(arg.EndsWith(".mdl"))
                 ExportModelToGLTF(args, arg);
-
-            if (arg.EndsWith(".mtl"))
+            else if(arg.EndsWith(".mtl"))
                 ConvertMtlToMaterialJson(arg);
-
-            if (arg.EndsWith(".mtl.json"))
+            else if(arg.EndsWith(".mtl.json"))
                 ConvertJsonMaterialToMtl(arg);
-
-            if (arg.EndsWith(".pzd"))
+            else if(arg.EndsWith(".pzd"))
             {
                 PzdFile pzdFile = new PzdFile(File.OpenRead(arg));
                 File.WriteAllText(arg + ".xml", pzdFile.ToXml());
             }
-
-            if (arg.EndsWith(".pzd.xml"))
+            else if(arg.EndsWith(".pzd.xml"))
             {
                 string name = Path.GetFileName(arg).Replace(".pzd.xml", "");
                 string dir = Path.GetDirectoryName(arg);
@@ -76,8 +70,7 @@ public class Program
                 pzdFile.FromXML(File.ReadAllText(arg));
                 pzdFile.Save(arg.Replace(".xml", ""));
             }
-
-            if (Directory.Exists(arg))
+            else if(Directory.Exists(arg))
             {
                 foreach (var f in Directory.GetFiles(arg))
                 {
@@ -89,15 +82,17 @@ public class Program
                     pzdFile.Save(f.Replace(".xml", ""));
                 }
             }
-
-            if (arg.EndsWith(".glb") || arg.EndsWith(".gltf"))
+            else if(arg.EndsWith(".glb") || arg.EndsWith(".gltf"))
             {
                 ImportAnimFromGLTF(args);
             }
-
-            if (arg.EndsWith(".anmb"))
+            else if(arg.EndsWith(".anmb"))
             {
                 ExportAnimToGLTF(args);
+            }
+            else
+            {
+                Console.WriteLine($"Unrecognized input/file/folder: {arg}");
             }
         }
     }
@@ -177,6 +172,8 @@ public class Program
         MdlFile mdlFile = new MdlFile(File.OpenRead(baseModel));
 
         GLTFToFaithModelConverter.ClearMeshes(mdlFile);
+
+        var converter = new GLTFToFaithModelConverter();
         for (int i = 0; i < 8; i++)
         {
             string filePathGLTF = Path.Combine(fullPath, $"{name}_LOD{i}.gltf");
@@ -206,11 +203,10 @@ public class Program
                 Console.WriteLine($"Importing LOD{i} (OBJ)");
             }
 
-            var converter = new GLTFToFaithModelConverter();
             if (!string.IsNullOrEmpty(inputPath))
             {
                 //Import LOD level
-                converter.Convert(mdlFile, inputPath, false);
+                converter.AddLOD(mdlFile, inputPath, clearExistingMeshes: false);
 
                 // Prepare generated joint info for extra bones not found in base MDL file
                 mdlFile.SetGeneratedJoints(converter.GeneratedJoints);

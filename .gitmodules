@@ -1,3 +1,6 @@
 [submodule "IONET"]
 	path = IONET
 	url = https://github.com/Nenkai/IONET
+[submodule "HKLib"]
+	path = HKLib
+	url = https://github.com/obilang/HKLib

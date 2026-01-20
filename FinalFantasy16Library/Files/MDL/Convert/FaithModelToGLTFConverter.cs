@@ -40,8 +40,6 @@ public class FaithModelToGLTFConverter
             var lodModel = mdlFile.LODModels[i];
 
             Memory<byte> decompressedVbo = vertexBuffer.GetDecompressedData(lodModel.DecompVertexBuffSize);
-            File.WriteAllBytes("test.buf", decompressedVbo.Span);
-
             Memory<byte> decompressedIbo = indexBuffer.GetDecompressedData(lodModel.DecompIdxBuffSize);
 
             for (int j = 0; j < lodModel.MeshCount; j++)
@@ -50,8 +48,20 @@ public class FaithModelToGLTFConverter
 
                 var mesh = mdlFile.MeshInfos[j + lodModel.MeshIndex];
 
+                
                 IOMesh iomesh = new IOMesh();
-                iomesh.Name = $"LOD{i}_Mesh{j}";
+
+                string materialName = mdlFile.MaterialNames[mesh.MaterialID];
+                if (!string.IsNullOrWhiteSpace(materialName))
+                {
+                    if (materialName.StartsWith("m_"))
+                        iomesh.Name = materialName.Substring(2);
+                    else
+                        iomesh.Name = materialName;
+                }
+                else
+                    iomesh.Name = $"LOD{i}_Mesh{j}";
+
                 iomodel.Meshes.Add(iomesh);
 
                 var attributeSet = mdlFile.AttributeSets[mesh.FlexVertexInfoID];
@@ -84,24 +94,29 @@ public class FaithModelToGLTFConverter
                         iomesh.HasBitangents = true;
                     }
 
+                    // NOTE: We set the COLOR channel in a custom attribute. Why?
+                    // Because Blender >=4.1 (i've checked) drops the alpha channel, at least it looks like.
+                    // This causes clive's face (c1001/f0103 & potentially others) to appear.. aged
                     if (v.Color is not null)
-                    {
-                        iovertex.SetColor(v.Color.Value.X, v.Color.Value.Y, v.Color.Value.Z, v.Color.Value.W);
-                        iomesh.HasColorSet(0);
-                    }
+                        iovertex.SetCustom($"_{MdlVertexSemantic.COLOR_0}", v.Color);
 
-                    if (v.UnknownColor5Attr is not null)
+                    if (v.UnknownColor1Attr is not null)  // Head/Hair model
+                        iovertex.SetCustom($"_{MdlVertexSemantic.COLOR_1}", v.UnknownColor1Attr);
+
+                    if (v.UnknownColor5Attr is not null) // All but map models
                         iovertex.SetCustom($"_{MdlVertexSemantic.COLOR_5}", v.UnknownColor5Attr);
-                    if (v.UnknownColor6Attr is not null)
+                    if (v.UnknownColor6Attr is not null) // All but map models
                         iovertex.SetCustom($"_{MdlVertexSemantic.COLOR_6}", v.UnknownColor6Attr);
+                    if (v.UnknownColor7Attr is not null) // Head/Hair model
+                        iovertex.SetCustom($"_{MdlVertexSemantic.COLOR_7}", v.UnknownColor7Attr);
 
-                    if (v.UnkTexcoord4Attr is not null)
+                    if (v.UnkTexcoord4Attr is not null) // Face model
                         iovertex.SetCustom($"_{MdlVertexSemantic.TEXCOORD_4}", v.UnkTexcoord4Attr);
-                    if (v.UnkTexcoord5Attr is not null)
+                    if (v.UnkTexcoord5Attr is not null) // Face model
                         iovertex.SetCustom($"_{MdlVertexSemantic.TEXCOORD_5}", v.UnkTexcoord5Attr);
-                    if (v.UnkTexcoord8Attr is not null)
+                    if (v.UnkTexcoord8Attr is not null) // Face model
                         iovertex.SetCustom($"_{MdlVertexSemantic.TEXCOORD_8}", v.UnkTexcoord8Attr);
-                    if (v.UnkTexcoord9Attr is not null)
+                    if (v.UnkTexcoord9Attr is not null) // Face model
                         iovertex.SetCustom($"_{MdlVertexSemantic.TEXCOORD_9}", v.UnkTexcoord9Attr);
                     if (v.UnkTexcoord13Attr is not null)
                         iovertex.SetCustom($"_{MdlVertexSemantic.TEXCOORD_13}", v.UnkTexcoord13Attr);

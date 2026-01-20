@@ -19,19 +19,10 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\HKLib\HKLib.Reflection\HKLib.Reflection.csproj" />
+    <ProjectReference Include="..\HKLib\HKLib.Serialization\HKLib.Serialization.csproj" />
+    <ProjectReference Include="..\HKLib\HKLib\HKLib.csproj" />
     <ProjectReference Include="..\IONET\IONET\IONET.csproj" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <Reference Include="HKLib">
-      <HintPath>Lib\HKLib.dll</HintPath>
-    </Reference>
-    <Reference Include="HKLib.Reflection">
-      <HintPath>Lib\HKLib.Reflection.dll</HintPath>
-    </Reference>
-    <Reference Include="HKLib.Serialization">
-      <HintPath>Lib\HKLib.Serialization.dll</HintPath>
-    </Reference>
   </ItemGroup>
 
 </Project>

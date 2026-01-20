@@ -111,14 +111,14 @@ public class GLTFToFaithModelConverter
         mdlFile.idxBuffers = [];
     }
 
-    public void Convert(MdlFile mdlFile, string path, bool clearExistingMeshes = true, ProgressTracker progress = null)
+    public void AddLOD(MdlFile mdlFile, string path, bool clearExistingMeshes = true)
     {
-        progress?.SetProgress(10, "Loading model file");
+        Console.WriteLine("Loading model file");
 
         var scene = IOManager.LoadScene(path, new ImportSettings());
         var model = scene.Models[0];
 
-        progress?.SetProgress(50, "Setting up mdl data");
+        Console.WriteLine("Setting up mdl data");
 
         if (clearExistingMeshes)
             ClearMeshes(mdlFile);
@@ -154,7 +154,7 @@ public class GLTFToFaithModelConverter
                 if (iomaterial != null)
                     mat = iomaterial.Label ?? iomaterial.Name;
 
-                progress?.SetProgress(100 * (float)index / model.Meshes.Count, $"Loading mesh ");
+                Console.WriteLine($"Loading mesh {index}");
 
                 MdlMeshInfo mesh = ImportMesh(mdlFile, iomesh, mat, vWriter, idxWriter, index);
                 meshes.Add(mesh);
@@ -169,7 +169,7 @@ public class GLTFToFaithModelConverter
             mdlFile.LODModels.Add(modelInfo);
             mdlFile.MeshInfos.AddRange(meshes);
 
-            progress?.SetProgress(80, "Compressing buffers");
+            Console.WriteLine("Compressing buffers");
 
             //Load buffers
             ModelBuffer buffer = new ModelBuffer();
@@ -244,7 +244,6 @@ public class GLTFToFaithModelConverter
                 TexCoord3 = iomesh.HasUVSet(3) ? vtx.UVs[3] : null,
                 Tangent = iomesh.HasTangents ? new Vector4(vtx.Tangent, 1f) : null,
                 Binormal = iomesh.HasBitangents ? new Vector4(vtx.Binormal, 1f) : null,
-                Color = iomesh.HasColorSet(0) ? vtx.Colors[0] : null,
             };
 
             if (vertex.Binormal is null && vertex.Normal is not null && vertex.Tangent is not null)
@@ -260,10 +259,16 @@ public class GLTFToFaithModelConverter
             {
                 switch (customAttr.Key)
                 {
+                    case "_COLOR_0":
+                        vertex.Color = (Vector4)customAttr.Value; break;
+                    case "_COLOR_1":
+                        vertex.UnknownColor1Attr = (Vector4)customAttr.Value; break;
                     case "_COLOR_5":
                         vertex.UnknownColor5Attr = (Vector4)customAttr.Value; break;
                     case "_COLOR_6":
                         vertex.UnknownColor6Attr = (Vector4)customAttr.Value; break;
+                    case "_COLOR_7":
+                        vertex.UnknownColor7Attr = (Vector4)customAttr.Value; break;
                     case "_TEXCOORD_4":
                         vertex.UnkTexcoord4Attr = (Vector4)customAttr.Value; break;
                     case "_TEXCOORD_5":
@@ -361,18 +366,22 @@ public class GLTFToFaithModelConverter
         bool hasBinormal = false;
         bool hasColors = false;
 
-        bool hasUnkAttr24 = false;
+        bool hasColor1Attr = false;
         bool hasColor5Attr = false;
         bool hasColor6Attr = false;
+        bool hasColor7Attr = false;
 
         bool hasTexcoord4Attr = false;
         bool hasTexcoord5Attr = false;
         bool hasTexcoord8Attr = false;
         bool hasTexcoord9Attr = false;
+
+        bool hasTexcoord13Attr = false;
         foreach (var vertex in vertices)
         {
             if (vertex.TexCoord0 is not null) hasTexCoords[0] = true;
-            if (vertex.TexCoord1 is not null) hasTexCoords[1] = true;
+            if (vertex.TexCoord1 is not null) 
+                hasTexCoords[1] = true;
             if (vertex.TexCoord2 is not null) hasTexCoords[2] = true;
             if (vertex.TexCoord3 is not null) hasTexCoords[3] = true;
 
@@ -387,12 +396,16 @@ public class GLTFToFaithModelConverter
             if (vertex.Binormal is not null) hasBinormal = true;
             if (vertex.Color is not null) hasColors = true;
 
+            if (vertex.UnknownColor1Attr is not null) hasColor1Attr = true; // Head/Hair models
+
             if (vertex.UnknownColor5Attr is not null) hasColor5Attr = true;
             if (vertex.UnknownColor6Attr is not null) hasColor6Attr = true;
-            if (vertex.UnkTexcoord4Attr is not null) hasTexcoord4Attr = true;
-            if (vertex.UnkTexcoord5Attr is not null) hasTexcoord5Attr = true;
-            if (vertex.UnkTexcoord8Attr is not null) hasTexcoord8Attr = true;
-            if (vertex.UnkTexcoord9Attr is not null) hasTexcoord9Attr = true;
+            if (vertex.UnknownColor7Attr is not null) hasColor7Attr = true; // Head/Hair models
+            if (vertex.UnkTexcoord4Attr is not null) hasTexcoord4Attr = true; // Face models
+            if (vertex.UnkTexcoord5Attr is not null) hasTexcoord5Attr = true; // Face models
+            if (vertex.UnkTexcoord8Attr is not null) hasTexcoord8Attr = true; // Face models
+            if (vertex.UnkTexcoord9Attr is not null) hasTexcoord9Attr = true; // Face models
+            if (vertex.UnkTexcoord13Attr is not null) hasTexcoord13Attr = true;
         }
 
         void AddAttribute(MdlVertexSemantic type, EncodingFormat format, ref byte offset, byte buffer = 0)
@@ -447,8 +460,10 @@ public class GLTFToFaithModelConverter
                 AddAttribute(MdlVertexSemantic.TEXCOORD_12_BITANGENT, EncodingFormat.HALFFLOATx4, ref offset2, 1);
             if (hasColors)
                 AddAttribute(MdlVertexSemantic.COLOR_0, EncodingFormat.UNORM8x4, ref offset2, 1);
+            if (hasColor1Attr)
+                AddAttribute(MdlVertexSemantic.COLOR_1, EncodingFormat.UNORM8x4, ref offset2, 1);
 
-            if (hasUnkAttr24)
+            if (hasTexcoord13Attr)
                 AddAttribute(MdlVertexSemantic.TEXCOORD_13, EncodingFormat.HALFFLOATx4, ref offset2, 1);
 
             // Used by face models
@@ -466,6 +481,10 @@ public class GLTFToFaithModelConverter
                 AddAttribute(MdlVertexSemantic.COLOR_5, EncodingFormat.UNORM8x4, ref offset2, 1);
             if (hasColor6Attr)
                 AddAttribute(MdlVertexSemantic.COLOR_6, EncodingFormat.UINT8x4, ref offset2, 1);
+
+            // Head/hair model
+            if (hasColor7Attr)
+                AddAttribute(MdlVertexSemantic.COLOR_7, EncodingFormat.FLOATx4, ref offset2, 1);
         }
 
         return vertexAttributes;

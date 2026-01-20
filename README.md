@@ -2,13 +2,17 @@
 A tool to export and import FF16 .mdl file binaries as .gltf 
 
 ## Requirements
-- [.NET Desktop Runtime 9.0.9](https://dotnet.microsoft.com/en-us/download/dotnet/9.0)
+- [.NET Desktop Runtime 10](https://dotnet.microsoft.com/en-us/download/dotnet/10.0)
 
 ## Supports
 - MDL exporting and replacing
 - MTL exporting and replacing
 - PZD exporting and replacing
 - ANMB exporting and replacing
+
+## Download
+
+[In releases](https://github.com/Nenkai/FF16-Model-Importer/releases).
 
 ## Usage
 

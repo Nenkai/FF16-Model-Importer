@@ -23,7 +23,8 @@ public class Program
             Console.WriteLine("Usage:");
             Console.WriteLine("----------------------------------------");
             Console.WriteLine("- Extract model to .gltf (pac is needed for skeleton):");
-            Console.WriteLine("     MdlConverter.exe <model_file_path> <pac_file_path> ");
+            Console.WriteLine("     MdlConverter.exe <model_file_path> <pac_file_path> [skeleton_name]");
+            Console.WriteLine("     Optional skeleton_name: Specify a specific .skl file name from the PAC (e.g., body_base.skl)");
             Console.WriteLine("- Import model to .mdl (Requires all LODs in the body folder to be named body_LODx with x as a number):");
             Console.WriteLine("     MdlConverter.exe <model_folder>");
             Console.WriteLine("- Import GLTF (animation) to ANMB (Havok):");
@@ -135,11 +136,42 @@ public class Program
             //Get skeleton from given pac argument
             PacFile pac = new PacFile(File.OpenRead(pacFile));
 
-            //Multiple skeletons
-            foreach (var file in pac.Files.Where(x => x.FileName.EndsWith(".skl")).OrderByDescending(g => g.FileName.Contains("body.skl")))
+            // Check if a specific skeleton name was provided (3rd argument)
+            var skelNameArg = args.Skip(2).FirstOrDefault(x => !x.EndsWith(".mdl") && !x.EndsWith(".pac"));
+            
+            if (!string.IsNullOrEmpty(skelNameArg))
             {
-                SklFile skel = SklFile.Open(file.Data);
-                skeletons.Add(skel);
+                // Use only the specified skeleton
+                var specificSkelFile = pac.Files.FirstOrDefault(x => 
+                    x.FileName.EndsWith(".skl") && 
+                    (x.FileName.Equals(skelNameArg, StringComparison.OrdinalIgnoreCase) || 
+                     x.FileName.EndsWith($"/{skelNameArg}", StringComparison.OrdinalIgnoreCase) ||
+                     x.FileName.EndsWith($"\\{skelNameArg}", StringComparison.OrdinalIgnoreCase)));
+                
+                if (specificSkelFile != null)
+                {
+                    Console.WriteLine($"Using specified skeleton: {specificSkelFile.FileName}");
+                    SklFile skel = SklFile.Open(specificSkelFile.Data);
+                    skeletons.Add(skel);
+                }
+                else
+                {
+                    Console.WriteLine($"WARNING: Specified skeleton '{skelNameArg}' not found in PAC file.");
+                    Console.WriteLine("Available skeletons:");
+                    foreach (var sklFile in pac.Files.Where(x => x.FileName.EndsWith(".skl")))
+                    {
+                        Console.WriteLine($"  - {sklFile.FileName}");
+                    }
+                }
+            }
+            else
+            {
+                //Multiple skeletons
+                foreach (var file in pac.Files.Where(x => x.FileName.EndsWith(".skl")).OrderByDescending(g => g.FileName.Contains("body.skl")))
+                {
+                    SklFile skel = SklFile.Open(file.Data);
+                    skeletons.Add(skel);
+                }
             }
         }
 

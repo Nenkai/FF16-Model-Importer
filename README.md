@@ -20,6 +20,7 @@ In a command line window
 
 Commands:
 - Export from MDL to GLTF: `MdlConverter.exe body.mdl c1002.pac` (Extracts contents to a folder called `body` with all LOD models as .gltf. The .pac file from the character `pack` folder is required to export skeleton data)
+  - Optional: Specify a specific skeleton from the PAC: `MdlConverter.exe body.mdl c1002.pac body_base.skl` (Uses only the specified .skl file instead of all skeletons in the PAC)
 - Import from GLTF to MDL: `MdlConverter.exe body` (Imports mdl contents back from `body` folder. Requires putting a copy of a "base" MDL file in the same directory as `body` folder. Requires all LODs in the `body` folder to be named `body_LODx` with `x` as a number)
 - Export from MTL to JSON: `MdlConverter.exe material.mtl` 
 - Import from JSON to MTL: `MdlConverter.exe material.mtl.json` (Currently this will overwrite old MTL file, recommended to put working JSON in another directory)
@@ -27,6 +28,8 @@ Commands:
 - Import from XML to PZD: `MdlConverter.exe text.pzd.xml` (Currently this will overwrite old PZD file, recommended to put working XML in another directory)
 - Import from GLTF to ANMB: `MdlConverter.exe animation.glb body_base.skl` (Imports an animation, converting it from GLB/GLTF to Havok format. Requires the original skeleton file of the animation's target as a parameter)
 - Export from ANMB to GLTF: `MdlConverter.exe animation.anmb body_base.skl` (Exports an animation, converting it from Havok format to GLB/GLTF. Requires the original skeleton file of the animation's target as a parameter)
+
+Recommand using specific skl to export mdl to gltf for character have multiple skeletons (like Clive), by default the converter will merge all skeletons in the PAC which now have issues on model like head.
 
 To properly import to MDL, your GLTF model must point to only materials that are used by the "base" MDL file. You can look up the materials using a hex editor. 
 Example: One of the materials that Clive's `chara/c1001/model/body/b0001/body.mdl` model uses is named `m_c1001b0001_body_a.mtl`. To assign that file to your mesh, create a material named `m_body_a` and make sure to include materials when generating your GLTF file.
